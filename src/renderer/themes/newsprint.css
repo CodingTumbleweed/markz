@@ -1,0 +1,29 @@
+/* Newsprint Theme - Serif, warm tones */
+:root[data-theme="newsprint"] {
+  --markz-bg: #faf8f5;
+  --markz-fg: #3c3836;
+  --markz-accent: #9d0006;
+  --markz-border: #d5c4a1;
+  --markz-code-bg: #f2e5bc;
+  --markz-heading-color: #282828;
+  --markz-blockquote-border: #bdae93;
+  --markz-blockquote-color: #665c54;
+  --markz-selection-bg: #9d000633;
+  --markz-sidebar-bg: #f2e5bc;
+  --markz-sidebar-hover: #d5c4a1;
+  --markz-font-family: 'Georgia', 'Palatino Linotype', 'Book Antiqua', serif;
+}
+
+:root[data-theme="newsprint"].dark {
+  --markz-bg: #282828;
+  --markz-fg: #ebdbb2;
+  --markz-accent: #fb4934;
+  --markz-border: #504945;
+  --markz-code-bg: #3c3836;
+  --markz-heading-color: #fbf1c7;
+  --markz-blockquote-border: #665c54;
+  --markz-blockquote-color: #a89984;
+  --markz-selection-bg: #fb493433;
+  --markz-sidebar-bg: #3c3836;
+  --markz-sidebar-hover: #504945;
+}

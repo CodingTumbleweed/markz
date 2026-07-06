@@ -1,0 +1,28 @@
+/* Minimal Theme - Ultra clean, monochrome */
+:root[data-theme="minimal"] {
+  --markz-bg: #ffffff;
+  --markz-fg: #333333;
+  --markz-accent: #555555;
+  --markz-border: #eeeeee;
+  --markz-code-bg: #f5f5f5;
+  --markz-heading-color: #111111;
+  --markz-blockquote-border: #cccccc;
+  --markz-blockquote-color: #777777;
+  --markz-selection-bg: #33333322;
+  --markz-sidebar-bg: #fafafa;
+  --markz-sidebar-hover: #eeeeee;
+}
+
+:root[data-theme="minimal"].dark {
+  --markz-bg: #1a1a1a;
+  --markz-fg: #d4d4d4;
+  --markz-accent: #a0a0a0;
+  --markz-border: #333333;
+  --markz-code-bg: #252525;
+  --markz-heading-color: #f0f0f0;
+  --markz-blockquote-border: #444444;
+  --markz-blockquote-color: #888888;
+  --markz-selection-bg: #d4d4d422;
+  --markz-sidebar-bg: #222222;
+  --markz-sidebar-hover: #333333;
+}

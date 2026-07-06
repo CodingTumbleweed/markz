@@ -1,0 +1,69 @@
+/* Markz Night Theme (Dark) */
+:root {
+  --markz-bg: #0d1117;
+  --markz-fg: #e6edf3;
+  --markz-accent: #58a6ff;
+  --markz-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  --markz-mono-font: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --markz-content-width: 800px;
+  --markz-line-height: 1.6;
+}
+
+html.dark .cm-editor .cm-activeLine {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+html.dark .cm-editor .cm-selectionBackground {
+  background: rgba(88, 166, 255, 0.2) !important;
+}
+
+html.dark .markz-code-block {
+  background: #161b22;
+  border-color: #30363d;
+}
+
+html.dark .markz-code-header {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #30363d;
+  color: #8b949e;
+}
+
+html.dark .markz-inline-code {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.dark .markz-table th {
+  background: #161b22;
+}
+
+html.dark .markz-table th,
+html.dark .markz-table td {
+  border-color: #30363d;
+}
+
+html.dark .markz-status-bar {
+  background: #161b22;
+  border-color: #30363d;
+  color: #8b949e;
+}
+
+html.dark .markz-status-file {
+  color: #e6edf3;
+}
+
+html.dark .markz-hr-line {
+  background: #30363d;
+}
+
+html.dark .markz-yaml-line {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #30363d;
+  color: #8b949e;
+}
+
+html.dark .hljs-keyword { color: #ff7b72; }
+html.dark .hljs-string { color: #a5d6ff; }
+html.dark .hljs-comment { color: #8b949e; }
+html.dark .hljs-function .hljs-title { color: #d2a8ff; }
+html.dark .hljs-number { color: #79c0ff; }
+html.dark .hljs-built_in { color: #ffa657; }
