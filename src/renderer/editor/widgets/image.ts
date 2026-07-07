@@ -1,4 +1,5 @@
 import { WidgetType, EditorView } from '@codemirror/view'
+import { attachBlockWidgetClick } from '../enterBlockWidget'
 
 export class ImageWidget extends WidgetType {
   constructor(
@@ -30,11 +31,7 @@ export class ImageWidget extends WidgetType {
 
     wrapper.appendChild(img)
 
-    wrapper.addEventListener('mousedown', (e) => {
-      e.preventDefault()
-      view.dispatch({ selection: { anchor: this.from } })
-      view.focus()
-    })
+    attachBlockWidgetClick(wrapper, view, this.from)
 
     return wrapper
   }

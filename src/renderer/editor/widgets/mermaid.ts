@@ -1,5 +1,6 @@
 import { WidgetType, EditorView } from '@codemirror/view'
 import mermaid from 'mermaid'
+import { attachBlockWidgetClick } from '../enterBlockWidget'
 
 let mermaidInitialized = false
 let idCounter = 0
@@ -42,11 +43,7 @@ export class MermaidWidget extends WidgetType {
       wrapper.innerHTML = `<div class="markz-mermaid-error">Diagram error: ${err.message || err}</div>`
     })
 
-    wrapper.addEventListener('mousedown', (e) => {
-      e.preventDefault()
-      view.dispatch({ selection: { anchor: this.from } })
-      view.focus()
-    })
+    attachBlockWidgetClick(wrapper, view, this.from, this.to)
 
     wrapper.addEventListener('contextmenu', (e) => {
       e.preventDefault()

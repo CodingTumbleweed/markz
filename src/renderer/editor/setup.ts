@@ -22,7 +22,7 @@ import {
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 import { markdownDecorations } from './decorations'
-import { blockDecorations } from './blockDecorations'
+import { blockDecorations, blockWidgetRangesField } from './blockDecorations'
 import { markzKeymap, listContinuation } from './keymap'
 import { statusBarPlugin } from '../components/statusBar'
 import { outlinePlugin } from '../components/outlinePanel'
@@ -147,6 +147,7 @@ export function createEditor(parent: HTMLElement): EditorView {
       markdown({ base: markdownLanguage }),
       markdownDecorations,
       blockDecorations,
+      blockWidgetRangesField,
       focusModeState,
       focusModeDecorations,
       typewriterModeState,

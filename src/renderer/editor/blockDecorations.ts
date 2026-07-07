@@ -7,6 +7,11 @@ import { TableWidget, parseTableRow, parseAlignments } from './widgets/table'
 import { BlockMathWidget } from './widgets/math'
 import { MermaidWidget } from './widgets/mermaid'
 
+export interface BlockWidgetRange {
+  from: number
+  to: number
+}
+
 const sourceHidden = Decoration.line({ class: 'markz-source-hidden' })
 
 function getActiveLinesRange(state: EditorState): { from: number; to: number } | null {
@@ -41,8 +46,10 @@ function addBlockWidget(
   to: number,
   widget: import('@codemirror/view').WidgetType,
   decos: Range<Decoration>[],
+  ranges: BlockWidgetRange[],
 ) {
   hideSourceLines(doc, from, to, decos)
+  ranges.push({ from, to })
   decos.push(
     Decoration.widget({
       widget,
@@ -53,8 +60,16 @@ function addBlockWidget(
 }
 
 function buildBlockDecorations(state: EditorState): DecorationSet {
+  return buildBlockEditorState(state).decorations
+}
+
+function buildBlockEditorState(state: EditorState): {
+  decorations: DecorationSet
+  widgetRanges: BlockWidgetRange[]
+} {
   const active = getActiveLinesRange(state)
   const decos: Range<Decoration>[] = []
+  const widgetRanges: BlockWidgetRange[] = []
   const doc = state.doc
   const tree = syntaxTree(state)
 
@@ -71,7 +86,7 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
           const lines = text.split('\n')
           const source = lines.slice(1, -1).join('\n')
           addBlockWidget(doc, node.from, node.to,
-            new MermaidWidget(source, node.from, node.to), decos)
+            new MermaidWidget(source, node.from, node.to), decos, widgetRanges)
           return
         }
 
@@ -80,7 +95,7 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
           const lines = text.split('\n')
           const latex = lines.slice(1, -1).join('\n')
           addBlockWidget(doc, node.from, node.to,
-            new BlockMathWidget(latex, node.from, node.to), decos)
+            new BlockMathWidget(latex, node.from, node.to), decos, widgetRanges)
           return
         }
 
@@ -90,7 +105,7 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
         const language = langMatch?.[1] || ''
         const code = lines.slice(1, -1).join('\n')
         addBlockWidget(doc, node.from, node.to,
-          new CodeBlockWidget(code, language, node.from, node.to), decos)
+          new CodeBlockWidget(code, language, node.from, node.to), decos, widgetRanges)
       }
 
       if (t === 'Image') {
@@ -99,7 +114,7 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
         const match = text.match(/^!\[([^\]]*)\]\(([^)]+)\)/)
         if (match) {
           addBlockWidget(doc, node.from, node.to,
-            new ImageWidget(match[2], match[1], node.from), decos)
+            new ImageWidget(match[2], match[1], node.from), decos, widgetRanges)
         }
       }
 
@@ -116,7 +131,7 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
             dataRows.push(parseTableRow(lines[i]))
           }
           addBlockWidget(doc, node.from, node.to,
-            new TableWidget(dataRows, alignments, node.from, node.to), decos)
+            new TableWidget(dataRows, alignments, node.from, node.to), decos, widgetRanges)
         }
       }
     },
@@ -135,13 +150,28 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
     )
     if (!alreadyCovered) {
       addBlockWidget(doc, from, to,
-        new BlockMathWidget(match[1], from, to), decos)
+        new BlockMathWidget(match[1], from, to), decos, widgetRanges)
     }
   }
 
   decos.sort((a, b) => a.from - b.from || a.value.startSide - b.value.startSide)
-  return Decoration.set(decos, true)
+  return {
+    decorations: Decoration.set(decos, true),
+    widgetRanges,
+  }
 }
+
+export const blockWidgetRangesField = StateField.define<BlockWidgetRange[]>({
+  create(state) {
+    return buildBlockEditorState(state).widgetRanges
+  },
+  update(ranges, tr) {
+    if (tr.docChanged || tr.selection) {
+      return buildBlockEditorState(tr.state).widgetRanges
+    }
+    return ranges
+  },
+})
 
 export const blockDecorations = StateField.define<DecorationSet>({
   create(state) {

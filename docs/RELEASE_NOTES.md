@@ -84,6 +84,10 @@ Markz Beta transforms the Alpha editor into a feature-complete daily-use writing
 - Auto-update and code signing require distribution infrastructure.
 - Footnote definitions (content at bottom) not yet rendered -- only references are styled.
 
+### Post-Beta fixes (unreleased)
+
+- **Block navigation:** Arrow Up/Down uses visual stop navigation across rendered widgets; fixes multi-line jumps from the Shortcuts section and through code/math/Mermaid blocks ([#2](https://github.com/CodingTumbleweed/markz/issues/2)).
+
 ---
 
 ## V1.0

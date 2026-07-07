@@ -1,5 +1,6 @@
 import { WidgetType, EditorView } from '@codemirror/view'
 import hljs from 'highlight.js'
+import { attachBlockWidgetClick } from '../enterBlockWidget'
 
 export class CodeBlockWidget extends WidgetType {
   constructor(
@@ -40,11 +41,7 @@ export class CodeBlockWidget extends WidgetType {
     pre.appendChild(code)
     wrapper.appendChild(pre)
 
-    wrapper.addEventListener('mousedown', (e) => {
-      e.preventDefault()
-      view.dispatch({ selection: { anchor: this.from } })
-      view.focus()
-    })
+    attachBlockWidgetClick(wrapper, view, this.from, this.to)
 
     return wrapper
   }

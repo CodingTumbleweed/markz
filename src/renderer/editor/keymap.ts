@@ -1,6 +1,12 @@
 import { EditorView } from '@codemirror/view'
 import { EditorSelection } from '@codemirror/state'
 import { KeyBinding } from '@codemirror/view'
+import {
+  moveVisualLineDown,
+  moveVisualLineUp,
+  selectVisualLineDown,
+  selectVisualLineUp,
+} from './blockNavigation'
 
 export function wrapSelection(view: EditorView, before: string, after: string): boolean {
   const { state } = view
@@ -97,6 +103,8 @@ function pasteAsPlain(view: EditorView): boolean {
 }
 
 export const markzKeymap: KeyBinding[] = [
+  { key: 'ArrowUp', run: moveVisualLineUp, shift: selectVisualLineUp, preventDefault: true },
+  { key: 'ArrowDown', run: moveVisualLineDown, shift: selectVisualLineDown, preventDefault: true },
   { key: 'Mod-b', run: (v) => wrapSelection(v, '**', '**') },
   { key: 'Mod-i', run: (v) => wrapSelection(v, '*', '*') },
   { key: 'Mod-Shift-x', run: (v) => wrapSelection(v, '~~', '~~') },

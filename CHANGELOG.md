@@ -8,7 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-_No unreleased changes. Current release: Beta (0.2.0-beta.0)._
+### Added
+
+- Navigation regression harness (`npm run test:nav`) for block widget cursor movement.
+
+### Fixed
+
+- Arrow Up/Down now moves between visual navigation stops instead of skipping entire code, math, Mermaid, table, and image blocks in one keypress ([#2](https://github.com/CodingTumbleweed/markz/issues/2)).
 
 ---
 
