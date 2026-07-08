@@ -1,5 +1,4 @@
 import { WidgetType, EditorView } from '@codemirror/view'
-import { attachBlockWidgetClick } from '../enterBlockWidget'
 
 export class TableWidget extends WidgetType {
   constructor(
@@ -56,7 +55,11 @@ export class TableWidget extends WidgetType {
 
     wrapper.appendChild(table)
 
-    attachBlockWidgetClick(wrapper, view, this.from, this.to)
+    wrapper.addEventListener('mousedown', (e) => {
+      e.preventDefault()
+      view.dispatch({ selection: { anchor: this.from } })
+      view.focus()
+    })
 
     return wrapper
   }

@@ -1,6 +1,5 @@
 import { WidgetType, EditorView } from '@codemirror/view'
 import katex from 'katex'
-import { attachBlockWidgetClick } from '../enterBlockWidget'
 
 export class BlockMathWidget extends WidgetType {
   constructor(
@@ -32,7 +31,11 @@ export class BlockMathWidget extends WidgetType {
       wrapper.classList.add('markz-math-error')
     }
 
-    attachBlockWidgetClick(wrapper, view, this.from, this.to)
+    wrapper.addEventListener('mousedown', (e) => {
+      e.preventDefault()
+      view.dispatch({ selection: { anchor: this.from } })
+      view.focus()
+    })
 
     return wrapper
   }
