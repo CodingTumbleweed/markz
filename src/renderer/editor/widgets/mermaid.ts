@@ -1,6 +1,7 @@
 import { WidgetType, EditorView } from '@codemirror/view'
 import mermaid from 'mermaid'
 import { attachBlockWidgetClick } from '../enterBlockWidget'
+import { scheduleEditorMeasure } from '../measure'
 
 let mermaidInitialized = false
 let idCounter = 0
@@ -39,11 +40,14 @@ export class MermaidWidget extends WidgetType {
     mermaid.render(id, this.source).then(({ svg }) => {
       wrapper.innerHTML = svg
       wrapper.querySelector('svg')?.setAttribute('style', 'max-width:100%;height:auto;')
+      scheduleEditorMeasure(view)
     }).catch((err) => {
       wrapper.innerHTML = `<div class="markz-mermaid-error">Diagram error: ${err.message || err}</div>`
+      scheduleEditorMeasure(view)
     })
 
     attachBlockWidgetClick(wrapper, view, this.from, this.to)
+    scheduleEditorMeasure(view)
 
     wrapper.addEventListener('contextmenu', (e) => {
       e.preventDefault()

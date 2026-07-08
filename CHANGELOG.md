@@ -11,10 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Navigation regression harness (`npm run test:nav`) for block widget cursor movement.
+- Click-to-edit regression harness (`npm run test:click`) for inline and block math cursor placement.
+- Line click regression harness (`npm run test:line-click`) for heading/plain-line clicks below block widgets.
 
 ### Fixed
 
 - Arrow Up/Down now moves between visual navigation stops instead of skipping entire code, math, Mermaid, table, and image blocks in one keypress ([#2](https://github.com/CodingTumbleweed/markz/issues/2)).
+- Clicks below block widgets remap when they land on hidden interior lines; interior source lines use `display: none` to remove ghost click targets ([#1](https://github.com/CodingTumbleweed/markz/issues/1)).
+- Click-to-edit on inline math places the cursor inside the expression; block widget clicks defer `scrollIntoView` until after source lines expand ([#1](https://github.com/CodingTumbleweed/markz/issues/1)).
+- Source mode toggle now updates editor state, skips block widget decorations, and remeasures layout for accurate click targeting ([#1](https://github.com/CodingTumbleweed/markz/issues/1)).
 
 ---
 

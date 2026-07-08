@@ -9,23 +9,24 @@ import {
 import { EditorState, Range, RangeSet } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import { renderInlineMath } from './widgets/math'
+import { enterInlineMathWidget } from './enterBlockWidget'
 
 class InlineMathWidget extends WidgetType {
   constructor(
     readonly latex: string,
     readonly from: number,
+    readonly to: number,
   ) {
     super()
   }
   eq(other: InlineMathWidget): boolean {
-    return this.latex === other.latex
+    return this.latex === other.latex && this.from === other.from
   }
   toDOM(view: EditorView): HTMLElement {
     const el = renderInlineMath(this.latex)
     el.addEventListener('mousedown', (e) => {
       e.preventDefault()
-      view.dispatch({ selection: { anchor: this.from } })
-      view.focus()
+      enterInlineMathWidget(view, this.from, this.to)
     })
     return el
   }
@@ -269,7 +270,7 @@ function buildDecorations(view: EditorView): DecorationSet {
     if (isCursorInside(from, to, active)) continue
     decos.push(
       Decoration.replace({
-        widget: new InlineMathWidget(mathMatch[1], from),
+        widget: new InlineMathWidget(mathMatch[1], from, to),
       }).range(from, to)
     )
   }

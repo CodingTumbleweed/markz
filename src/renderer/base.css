@@ -87,7 +87,14 @@ html, body {
   display: inline;
 }
 
+.markz-source-mode .cm-line.markz-block-anchor {
+  color: inherit;
+  caret-color: var(--markz-accent);
+  user-select: text;
+}
+
 .markz-source-mode .cm-line.markz-source-hidden {
+  display: block !important;
   height: auto !important;
   min-height: auto !important;
   padding: initial !important;
@@ -100,6 +107,7 @@ html, body {
 }
 
 .markz-source-mode .cm-widgetBuffer,
+.markz-source-mode .cm-widget,
 .markz-source-mode .markz-code-block,
 .markz-source-mode .markz-table-wrapper,
 .markz-source-mode .markz-math-block,
@@ -108,17 +116,16 @@ html, body {
   display: none !important;
 }
 
-/* Widget-alongside-source: hide source lines when showing rendered widget */
+/* Widget-alongside-source: hide block source when showing rendered widget */
+.cm-line.markz-block-anchor {
+  color: transparent;
+  caret-color: transparent;
+  user-select: none;
+}
+
+/* Interior lines removed from layout (avoids ghost click targets below widgets) */
 .cm-line.markz-source-hidden {
-  height: 0 !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  border: none !important;
-  opacity: 0;
+  display: none !important;
 }
 
 /* Inline decoration styles */
@@ -251,6 +258,11 @@ html, body {
   background: #f6f8fa;
   border: 1px solid #e1e4e8;
   cursor: pointer;
+  pointer-events: none;
+}
+
+.markz-code-block > * {
+  pointer-events: auto;
 }
 
 .markz-code-header {
@@ -281,6 +293,11 @@ html, body {
   margin: 1em 0;
   text-align: center;
   cursor: pointer;
+  pointer-events: none;
+}
+
+.markz-image-wrapper > * {
+  pointer-events: auto;
 }
 
 .markz-image {
@@ -303,6 +320,11 @@ html, body {
   margin: 1em 0;
   overflow-x: auto;
   cursor: pointer;
+  pointer-events: none;
+}
+
+.markz-table-wrapper > * {
+  pointer-events: auto;
 }
 
 .markz-table {
@@ -524,6 +546,11 @@ html.dark .markz-highlight {
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.02);
   min-height: 60px;
+  pointer-events: none;
+}
+
+.markz-mermaid-block > * {
+  pointer-events: auto;
 }
 
 .markz-mermaid-block:hover {
@@ -554,6 +581,11 @@ html.dark .markz-highlight {
   cursor: pointer;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.02);
+  pointer-events: none;
+}
+
+.markz-math-block > * {
+  pointer-events: auto;
 }
 
 .markz-math-block:hover {

@@ -9,21 +9,38 @@ export function contentStartInBlock(doc: Text, from: number, to: number): number
     return newline >= 0 ? from + newline + 1 : from
   }
   if (text.startsWith('$$')) {
+    const singleLine = /^\$\$([^\n$]+)\$\$$/.exec(text)
+    if (singleLine) {
+      return from + text.indexOf(singleLine[1])
+    }
     const newline = text.indexOf('\n')
     return newline >= 0 ? from + newline + 1 : from + 2
   }
   return from
 }
 
+function focusWidgetAt(view: EditorView, pos: number): void {
+  view.dispatch({
+    selection: EditorSelection.cursor(pos),
+    scrollIntoView: false,
+  })
+  view.focus()
+  requestAnimationFrame(() => {
+    view.dispatch({
+      effects: EditorView.scrollIntoView(pos, { y: 'center' }),
+    })
+  })
+}
+
 export function enterBlockWidget(view: EditorView, from: number, to?: number): void {
   const cursorPos = to != null
     ? contentStartInBlock(view.state.doc, from, to)
     : from
-  view.dispatch({
-    selection: EditorSelection.cursor(cursorPos),
-    effects: EditorView.scrollIntoView(cursorPos, { y: 'center' }),
-  })
-  view.focus()
+  focusWidgetAt(view, cursorPos)
+}
+
+export function enterInlineMathWidget(view: EditorView, from: number, _to: number): void {
+  focusWidgetAt(view, from + 1)
 }
 
 export function attachBlockWidgetClick(

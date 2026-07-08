@@ -17,6 +17,7 @@ import { openSearchPanel } from '@codemirror/search'
 import { EditorView } from '@codemirror/view'
 import { wrapSelection, setHeading } from './editor/keymap'
 import { toggleFocusMode, focusModeState } from './editor/focusMode'
+import { toggleSourceMode, sourceModeState } from './editor/sourceMode'
 import { toggleTypewriterMode, typewriterModeState } from './editor/typewriterMode'
 import {
   initThemeSystem, applyTheme, setDarkMode,
@@ -57,7 +58,6 @@ let savedContent: string = view.state.doc.toString()
 setImageInsertFileGetter(() => currentFilePath)
 initZoom()
 let lastKnownMtime: number | null = null
-let sourceMode = false
 
 function markModified(): void {
   const current = view.state.doc.toString()
@@ -190,9 +190,14 @@ window.electronAPI.onFolderChanged(() => {
 })
 
 // Source mode toggle helper
-function toggleSourceMode() {
-  sourceMode = !sourceMode
-  document.body.classList.toggle('markz-source-mode', sourceMode)
+function toggleSourceModeView() {
+  const next = !view.state.field(sourceModeState)
+  document.body.classList.toggle('markz-source-mode', next)
+  view.dispatch({ effects: toggleSourceMode.of(next) })
+  requestAnimationFrame(() => {
+    view.requestMeasure()
+    requestAnimationFrame(() => view.requestMeasure())
+  })
 }
 
 // Command palette commands
@@ -209,7 +214,7 @@ const commands: PaletteCommand[] = [
     const panel = document.getElementById('outline-panel')
     if (panel) panel.classList.toggle('visible')
   }},
-  { id: 'source-mode', label: 'View: Toggle Source Mode', shortcut: 'Cmd+/', action: () => toggleSourceMode() },
+  { id: 'source-mode', label: 'View: Toggle Source Mode', shortcut: 'Cmd+/', action: () => toggleSourceModeView() },
   { id: 'focus-mode', label: 'View: Toggle Focus Mode', action: () => {
     const current = view.state.field(focusModeState)
     view.dispatch({ effects: toggleFocusMode.of(!current) })
@@ -329,7 +334,7 @@ async function menuHandler(action: string, ...args: unknown[]) {
       break
     }
     case 'toggle-source': {
-      toggleSourceMode()
+      toggleSourceModeView()
       break
     }
     case 'toggle-focus': {

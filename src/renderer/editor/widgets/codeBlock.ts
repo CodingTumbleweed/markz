@@ -1,6 +1,7 @@
 import { WidgetType, EditorView } from '@codemirror/view'
 import hljs from 'highlight.js'
 import { attachBlockWidgetClick } from '../enterBlockWidget'
+import { scheduleEditorMeasure } from '../measure'
 
 export class CodeBlockWidget extends WidgetType {
   constructor(
@@ -42,6 +43,7 @@ export class CodeBlockWidget extends WidgetType {
     wrapper.appendChild(pre)
 
     attachBlockWidgetClick(wrapper, view, this.from, this.to)
+    scheduleEditorMeasure(view)
 
     return wrapper
   }

@@ -10,7 +10,9 @@
     "package:mac": "npm run build && electron-builder --mac",
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
-    "test:nav": "node scripts/navigation-test.mjs"
+    "test:nav": "node scripts/navigation-test.mjs",
+    "test:click": "node scripts/click-edit-test.mjs",
+    "test:line-click": "node scripts/line-click-test.mjs"
   },
   "author": "",
   "license": "MIT",

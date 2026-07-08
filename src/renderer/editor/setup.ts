@@ -1,4 +1,4 @@
-import { EditorState } from '@codemirror/state'
+import { EditorState, EditorSelection } from '@codemirror/state'
 import {
   EditorView,
   keymap,
@@ -28,6 +28,8 @@ import { statusBarPlugin } from '../components/statusBar'
 import { outlinePlugin } from '../components/outlinePanel'
 import { focusModeState, focusModeDecorations } from './focusMode'
 import { typewriterModeState, typewriterPlugin } from './typewriterMode'
+import { sourceModeState } from './sourceMode'
+import { resolveClickPosition } from './blockNavigation'
 import { handleImageDrop, handleImagePaste } from './imageInsert'
 import { smartPunctuationInputHandler } from './smartPunctuation'
 
@@ -148,6 +150,7 @@ export function createEditor(parent: HTMLElement): EditorView {
       markdownDecorations,
       blockDecorations,
       blockWidgetRangesField,
+      sourceModeState,
       focusModeState,
       focusModeDecorations,
       typewriterModeState,
@@ -155,6 +158,27 @@ export function createEditor(parent: HTMLElement): EditorView {
       statusBarPlugin,
       outlinePlugin,
       EditorView.domEventHandlers({
+        mousedown(event, view) {
+          const pos = view.posAtCoords({
+            x: event.clientX,
+            y: event.clientY,
+            side: 1,
+          })
+          if (pos == null) return false
+          const resolved = resolveClickPosition(
+            view.state,
+            pos,
+            event.clientX,
+            event.clientY,
+            view,
+          )
+          if (resolved === pos) return false
+          view.dispatch({
+            selection: EditorSelection.cursor(resolved),
+            scrollIntoView: true,
+          })
+          return true
+        },
         drop(event, view) {
           handleImageDrop(view, event)
           return false

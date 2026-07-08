@@ -6,6 +6,7 @@ import { ImageWidget } from './widgets/image'
 import { TableWidget, parseTableRow, parseAlignments } from './widgets/table'
 import { BlockMathWidget } from './widgets/math'
 import { MermaidWidget } from './widgets/mermaid'
+import { sourceModeState, toggleSourceMode } from './sourceMode'
 
 export interface BlockWidgetRange {
   from: number
@@ -13,6 +14,7 @@ export interface BlockWidgetRange {
 }
 
 const sourceHidden = Decoration.line({ class: 'markz-source-hidden' })
+const blockAnchor = Decoration.line({ class: 'markz-block-anchor' })
 
 function getActiveLinesRange(state: EditorState): { from: number; to: number } | null {
   const sel = state.selection.main
@@ -32,11 +34,13 @@ function hideSourceLines(
   to: number,
   decos: Range<Decoration>[],
 ) {
-  for (let pos = from; pos <= to;) {
-    const line = doc.lineAt(pos)
-    decos.push(sourceHidden.range(line.from))
-    if (line.to >= to) break
-    pos = line.to + 1
+  const startLine = doc.lineAt(from).number
+  const endLine = doc.lineAt(to).number
+
+  decos.push(blockAnchor.range(doc.lineAt(from).from))
+
+  for (let lineNum = startLine + 1; lineNum <= endLine; lineNum++) {
+    decos.push(sourceHidden.range(doc.line(lineNum).from))
   }
 }
 
@@ -67,6 +71,10 @@ function buildBlockEditorState(state: EditorState): {
   decorations: DecorationSet
   widgetRanges: BlockWidgetRange[]
 } {
+  if (state.field(sourceModeState)) {
+    return { decorations: Decoration.none, widgetRanges: [] }
+  }
+
   const active = getActiveLinesRange(state)
   const decos: Range<Decoration>[] = []
   const widgetRanges: BlockWidgetRange[] = []
@@ -166,7 +174,7 @@ export const blockWidgetRangesField = StateField.define<BlockWidgetRange[]>({
     return buildBlockEditorState(state).widgetRanges
   },
   update(ranges, tr) {
-    if (tr.docChanged || tr.selection) {
+    if (tr.docChanged || tr.selection || tr.effects.some((e) => e.is(toggleSourceMode))) {
       return buildBlockEditorState(tr.state).widgetRanges
     }
     return ranges
@@ -178,7 +186,7 @@ export const blockDecorations = StateField.define<DecorationSet>({
     return buildBlockDecorations(state)
   },
   update(decos, tr) {
-    if (tr.docChanged || tr.selection) {
+    if (tr.docChanged || tr.selection || tr.effects.some((e) => e.is(toggleSourceMode))) {
       return buildBlockDecorations(tr.state)
     }
     return decos

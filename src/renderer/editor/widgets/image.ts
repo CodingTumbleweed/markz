@@ -1,5 +1,6 @@
 import { WidgetType, EditorView } from '@codemirror/view'
 import { attachBlockWidgetClick } from '../enterBlockWidget'
+import { scheduleEditorMeasure } from '../measure'
 
 export class ImageWidget extends WidgetType {
   constructor(
@@ -32,6 +33,7 @@ export class ImageWidget extends WidgetType {
     wrapper.appendChild(img)
 
     attachBlockWidgetClick(wrapper, view, this.from)
+    scheduleEditorMeasure(view)
 
     return wrapper
   }

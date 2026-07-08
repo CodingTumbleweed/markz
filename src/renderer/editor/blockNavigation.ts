@@ -19,11 +19,11 @@ function rangeOverlaps(
   return aFrom < bTo && aTo > bFrom
 }
 
-/** Document positions where Arrow Up/Down may land (skips hidden widget interior lines). */
-export function getNavigationStops(
+/** Interior lines of inactive block widgets (hidden source lines). */
+export function getSkippedInteriorLineNumbers(
   state: EditorState,
   ranges: BlockWidgetRange[],
-): number[] {
+): Set<number> {
   const active = getActiveLineRange(state)
   const skipLineNumbers = new Set<number>()
 
@@ -36,9 +36,118 @@ export function getNavigationStops(
     }
   }
 
+  return skipLineNumbers
+}
+
+export function isInteriorHiddenLine(
+  state: EditorState,
+  pos: number,
+  ranges?: BlockWidgetRange[],
+): boolean {
+  const lineNum = state.doc.lineAt(pos).number
+  const widgetRanges = ranges ?? state.field(blockWidgetRangesField)
+  return getSkippedInteriorLineNumbers(state, widgetRanges).has(lineNum)
+}
+
+function isInactiveBlockFirstLine(
+  state: EditorState,
+  pos: number,
+  ranges: BlockWidgetRange[],
+): boolean {
+  const active = getActiveLineRange(state)
+  const lineNum = state.doc.lineAt(pos).number
+  for (const range of ranges) {
+    if (rangeOverlaps(range.from, range.to, active.from, active.to)) continue
+    if (state.doc.lineAt(range.from).number === lineNum) return true
+  }
+  return false
+}
+
+export function nearestStopByY(view: EditorView, stops: number[], clientY: number): number {
+  if (stops.length === 0) return 0
+  let best = stops[0]
+  let bestDist = Infinity
+  for (const stop of stops) {
+    const coords = view.coordsAtPos(stop)
+    if (!coords) continue
+    const mid = (coords.top + coords.bottom) / 2
+    const dist = Math.abs(clientY - mid)
+    if (dist < bestDist) {
+      bestDist = dist
+      best = stop
+    }
+  }
+  return best
+}
+
+/**
+ * Remap click when posAtCoords lands inside an inactive block but the visual
+ * line at the click Y is elsewhere (common below rendered widgets).
+ */
+export function resolveClickPosition(
+  state: EditorState,
+  pos: number,
+  clientX: number,
+  clientY: number,
+  view: EditorView,
+): number {
+  const ranges = state.field(blockWidgetRangesField)
+  const stops = getNavigationStops(state, ranges)
+
+  if (isInteriorHiddenLine(state, pos, ranges)) {
+    return nearestStopByY(view, stops, clientY)
+  }
+
+  const active = getActiveLineRange(state)
+  for (const range of ranges) {
+    if (rangeOverlaps(range.from, range.to, active.from, active.to)) continue
+    if (pos < range.from || pos > range.to) continue
+
+    try {
+      const scroller = view.scrollDOM
+      const docY = clientY - scroller.getBoundingClientRect().top + scroller.scrollTop
+      const visualFrom = view.lineBlockAtHeight(docY).from
+      const visualLine = state.doc.lineAt(visualFrom).number
+      const posLine = state.doc.lineAt(pos).number
+      if (visualLine !== posLine && !isInteriorHiddenLine(state, visualFrom)) {
+        const refined = view.posAtCoords({ x: clientX, y: clientY, side: 1 })
+        if (
+          refined != null
+          && state.doc.lineAt(refined).number === visualLine
+          && !isInteriorHiddenLine(state, refined)
+        ) {
+          return refined
+        }
+        return visualFrom
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  if (isInactiveBlockFirstLine(state, pos, ranges)) {
+    try {
+      const lineBlock = view.lineBlockAt(pos)
+      if (clientY > lineBlock.bottom - 2) {
+        return nearestStopByY(view, stops, clientY)
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  return pos
+}
+
+/** Document positions where Arrow Up/Down may land (skips hidden widget interior lines). */
+export function getNavigationStops(
+  state: EditorState,
+  ranges: BlockWidgetRange[],
+): number[] {
+  const skipped = getSkippedInteriorLineNumbers(state, ranges)
   const stops: number[] = []
   for (let line = 1; line <= state.doc.lines; line++) {
-    if (skipLineNumbers.has(line)) continue
+    if (skipped.has(line)) continue
     stops.push(state.doc.line(line).from)
   }
   return stops

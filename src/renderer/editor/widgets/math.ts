@@ -1,6 +1,7 @@
 import { WidgetType, EditorView } from '@codemirror/view'
 import katex from 'katex'
 import { attachBlockWidgetClick } from '../enterBlockWidget'
+import { scheduleEditorMeasure } from '../measure'
 
 export class BlockMathWidget extends WidgetType {
   constructor(
@@ -33,6 +34,7 @@ export class BlockMathWidget extends WidgetType {
     }
 
     attachBlockWidgetClick(wrapper, view, this.from, this.to)
+    scheduleEditorMeasure(view)
 
     return wrapper
   }

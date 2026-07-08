@@ -87,6 +87,8 @@ Markz Beta transforms the Alpha editor into a feature-complete daily-use writing
 ### Post-Beta fixes (unreleased)
 
 - **Block navigation:** Arrow Up/Down uses visual stop navigation across rendered widgets; fixes multi-line jumps from the Shortcuts section and through code/math/Mermaid blocks ([#2](https://github.com/CodingTumbleweed/markz/issues/2)).
+- **Line click targeting:** Interior widget source lines removed from layout (`display: none`); clicks remap when `posAtCoords` disagrees with the visual line below a widget ([#1](https://github.com/CodingTumbleweed/markz/issues/1)).
+- **Click-to-edit:** Inline math and block widget clicks place the cursor at sensible source positions with deferred scroll ([#1](https://github.com/CodingTumbleweed/markz/issues/1)).
 
 ---
 
