@@ -1,26 +1,61 @@
-appId: com.markz.app
+appId: com.markz.editor
 productName: Markz
+copyright: Copyright © 2026 Usman Akram
 directories:
   output: release
-  buildResources: resources
+  buildResources: build
 files:
   - dist/**/*
 asar: true
 
+publish:
+  provider: github
+  owner: CodingTumbleweed
+  repo: markz
+
 mac:
-  category: public.app-category.developer-tools
+  category: public.app-category.productivity
   target:
     - dmg
+    - zip
+  icon: build/icon.icns
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+  identity: null
 
 win:
   target:
     - nsis
+    - portable
+  icon: build/icon.ico
+  artifactName: "${productName}-Setup-${version}.${ext}"
 
 linux:
-  category: Development
   target:
+    - AppImage
     - deb
+  category: Office
+  icon: build/icons
+  maintainer: Usman Akram <usman.akram.se@gmail.com>
+  artifactName: "${productName}-${version}.${ext}"
 
 nsis:
   oneClick: false
+  perMachine: false
   allowToChangeInstallationDirectory: true
+
+fileAssociations:
+  - ext: md
+    name: Markdown Document
+    description: Markdown Document
+    role: Editor
+    mimeType: text/markdown
+  - ext: markdown
+    name: Markdown Document
+    description: Markdown Document
+    role: Editor
+    mimeType: text/markdown
+  - ext: mdown
+    name: Markdown Document
+    description: Markdown Document
+    role: Editor
+    mimeType: text/markdown

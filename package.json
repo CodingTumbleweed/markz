@@ -1,8 +1,18 @@
 {
   "name": "markz",
-  "version": "0.2.0-beta.0",
+  "version": "0.2.0-beta.1",
   "description": "A seamless WYSIWYG Markdown editor for desktop",
   "main": "dist/main/index.js",
+  "author": "Usman Akram <usman.akram.se@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/CodingTumbleweed/markz#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CodingTumbleweed/markz.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CodingTumbleweed/markz/issues"
+  },
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
@@ -10,70 +20,8 @@
     "package:mac": "npm run build && electron-builder --mac",
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
+    "generate:icons": "python3 scripts/generate-icons.py",
     "test:nav": "node scripts/navigation-test.mjs"
-  },
-  "author": "",
-  "license": "MIT",
-  "build": {
-    "appId": "com.markz.editor",
-    "productName": "Markz",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*"
-    ],
-    "mac": {
-      "category": "public.app-category.productivity",
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "icon": "build/icon.icns"
-    },
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ],
-      "icon": "build/icon.ico"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Office",
-      "icon": "build/icons"
-    },
-    "fileAssociations": [
-      {
-        "ext": "md",
-        "name": "Markdown Document",
-        "description": "Markdown Document",
-        "role": "Editor",
-        "mimeType": "text/markdown"
-      },
-      {
-        "ext": "markdown",
-        "name": "Markdown Document",
-        "description": "Markdown Document",
-        "role": "Editor",
-        "mimeType": "text/markdown"
-      },
-      {
-        "ext": "mdown",
-        "name": "Markdown Document",
-        "description": "Markdown Document",
-        "role": "Editor",
-        "mimeType": "text/markdown"
-      }
-    ],
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true
-    }
   },
   "devDependencies": {
     "@types/katex": "^0.16.8",

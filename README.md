@@ -4,7 +4,22 @@ A seamless, distraction-free WYSIWYG Markdown editor for desktop.
 
 Markz removes the split between "editing" and "previewing". You write Markdown, and it renders inline as you type — what you see is what you mean.
 
-**Status:** Beta (`0.2.0-beta.0`) — usable for daily writing. See [Release Notes](docs/RELEASE_NOTES.md) and [Changelog](CHANGELOG.md).
+**Status:** Beta — usable for daily writing. See [Release Notes](docs/RELEASE_NOTES.md) and [Changelog](CHANGELOG.md).
+
+[![Latest release](https://img.shields.io/github/v/release/CodingTumbleweed/markz?include_prereleases&label=download)](https://github.com/CodingTumbleweed/markz/releases/latest)
+
+## Download
+
+Pre-built installers for macOS, Windows, and Linux are available on **[GitHub Releases](https://github.com/CodingTumbleweed/markz/releases/latest)**.
+
+| Platform | Download |
+|----------|----------|
+| macOS (Apple Silicon) | `Markz-*-arm64.dmg` |
+| macOS (Intel) | `Markz-*-x64.dmg` |
+| Windows | `Markz-Setup-*.exe` |
+| Linux | `Markz-*.AppImage` or `markz_*_amd64.deb` |
+
+Beta builds are **unsigned** — macOS Gatekeeper and Windows SmartScreen may warn on first launch. See the [installation guide](docs/INSTALL.md) for workarounds and checksum verification.
 
 ## Features
 
@@ -26,14 +41,14 @@ Highlights, subscript/superscript, emoji, GitHub-style alerts, and Mermaid diagr
 
 ![Markz extended syntax and Mermaid diagrams](assets/images/03-extended-syntax-diagrams.png)
 
-## Quick start
+## Development
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) 20+
 - npm 10+
 
-### Development
+### Run from source
 
 ```bash
 git clone https://github.com/CodingTumbleweed/markz.git
@@ -92,8 +107,10 @@ Installers are written to `release/`.
 | [Technical Design](docs/DESIGN.md) | Architecture, tech stack, data flows, key subsystem designs |
 | [Feature Specification](docs/FEATURE_SPEC.md) | Prioritized feature list organized by category |
 | [Sprint Progress](docs/PROGRESS.md) | Sprint-by-sprint status tracker |
+| [Installation Guide](docs/INSTALL.md) | Download, install, and upgrade instructions |
 | [Release Notes](docs/RELEASE_NOTES.md) | User-facing highlights for each phase release |
 | [Changelog](CHANGELOG.md) | All notable changes |
+| [Security Policy](SECURITY.md) | Vulnerability reporting and supported versions |
 
 ## Tech stack
 

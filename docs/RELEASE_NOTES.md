@@ -90,6 +90,41 @@ Markz Beta transforms the Alpha editor into a feature-complete daily-use writing
 
 ---
 
+## 0.2.0-beta.1
+
+**Release date:** 2026-07-14  
+**Version:** 0.2.0-beta.1
+
+First public beta release with downloadable installers for macOS, Windows, and Linux via [GitHub Releases](https://github.com/CodingTumbleweed/markz/releases).
+
+### Distribution
+
+- **macOS:** DMG and ZIP for arm64 and x64 (unsigned)
+- **Windows:** NSIS installer and portable executable (unsigned)
+- **Linux:** AppImage and `.deb` package
+- **Checksums:** `SHA256SUMS.txt` on each release
+- **Install guide:** [docs/INSTALL.md](INSTALL.md)
+
+### What's new since 0.2.0-beta.0
+
+- GitHub Actions release workflow for automated cross-platform builds
+- Consolidated electron-builder configuration and app icons
+- MIT license, third-party notices, and security policy published
+- README updated with download links and install documentation
+
+### Known limitations
+
+- Builds are **unsigned** — Gatekeeper (macOS) and SmartScreen (Windows) warnings on first launch; see [INSTALL.md](INSTALL.md)
+- **Click-to-edit** in some block widget regions ([#1](https://github.com/CodingTumbleweed/markz/issues/1))
+- Tabbed editing not yet implemented (single document per window)
+- Custom theme loading from filesystem not yet available
+- Pandoc-based exports (docx, epub, LaTeX) require Pandoc installation (not bundled)
+- Inline HTML rendering deferred (requires HTML sanitization)
+- No in-app auto-update in beta — download new releases from GitHub manually
+- Footnote definitions (content at bottom) not yet rendered — only references are styled
+
+---
+
 ## V1.0
 
 **Release date:** TBD

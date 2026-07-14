@@ -8,13 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.2.0-beta.1] -- 2026-07-14
+
 ### Added
 
-- Navigation regression harness (`npm run test:nav`) for block widget cursor movement.
+- Cross-platform release packaging via GitHub Actions (macOS DMG/ZIP, Windows NSIS/portable, Linux AppImage/deb)
+- App icons and consolidated `electron-builder.yml` configuration
+- Installation guide ([docs/INSTALL.md](docs/INSTALL.md)) with unsigned-build workarounds
+- MIT `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `SECURITY.md`
+- SHA256 checksums attached to GitHub Releases
+- Navigation regression harness (`npm run test:nav`) for block widget cursor movement
 
 ### Fixed
 
 - Arrow Up/Down now moves between visual navigation stops instead of skipping entire code, math, Mermaid, table, and image blocks in one keypress ([#2](https://github.com/CodingTumbleweed/markz/issues/2)).
+
+### Changed
+
+- README download section points to GitHub Releases as the primary install path
+- `electron-builder` config consolidated into `electron-builder.yml` (`appId: com.markz.editor`)
 
 ---
 

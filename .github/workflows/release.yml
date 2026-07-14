@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            args: --mac --arm64 --x64
+          - os: windows-latest
+            platform: win
+            args: --win
+          - os: ubuntu-latest
+            platform: linux
+            args: --linux
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Package (${{ matrix.platform }})
+        run: npx electron-builder ${{ matrix.args }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: markz-${{ matrix.platform }}
+          path: |
+            release/**
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Flatten release files
+        run: |
+          mkdir -p release
+          find artifacts -type f \( \
+            -name '*.dmg' -o -name '*.zip' -o -name '*.exe' -o \
+            -name '*.AppImage' -o -name '*.deb' -o -name '*.blockmap' \
+          \) -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd release
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            See [docs/INSTALL.md](https://github.com/CodingTumbleweed/markz/blob/master/docs/INSTALL.md) for platform-specific instructions.
+
+            **Note:** Beta builds are unsigned. macOS and Windows may show security warnings on first launch.
+
+            Verify downloads with `SHA256SUMS.txt` included in this release.
+
+            ## Known limitations
+
+            - Click-to-edit in some block widget regions ([#1](https://github.com/CodingTumbleweed/markz/issues/1))
+            - No in-app auto-update in beta (download new releases manually)
+            - Pandoc not bundled
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
