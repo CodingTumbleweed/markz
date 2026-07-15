@@ -112,9 +112,26 @@ First public beta release with downloadable installers for macOS, Windows, and L
 - MIT license, third-party notices, and security policy published
 - README updated with download links and install documentation
 
+### macOS installation troubleshooting
+
+Unsigned beta builds downloaded from GitHub carry a **quarantine** flag. If you skip the post-install step, macOS may refuse to launch Markz — especially when opening a `.md` file via **Open With**:
+
+> **"Markz" is damaged and can't be opened. You should move it to the Trash.**
+
+**Fix:**
+
+```bash
+xattr -cr /Applications/Markz.app
+```
+
+Then right-click **Markz** in Applications → **Open** → confirm **Open** once. After that, double-click and **Open With** on Markdown files should work.
+
+Full details: [docs/INSTALL.md](INSTALL.md). Tracked in [#3](https://github.com/CodingTumbleweed/markz/issues/3).
+
 ### Known limitations
 
 - Builds are **unsigned** — Gatekeeper (macOS) and SmartScreen (Windows) warnings on first launch; see [INSTALL.md](INSTALL.md)
+- **macOS "damaged" error** when opening `.md` files from Finder — run `xattr -cr /Applications/Markz.app` ([#3](https://github.com/CodingTumbleweed/markz/issues/3))
 - **Click-to-edit** in some block widget regions ([#1](https://github.com/CodingTumbleweed/markz/issues/1))
 - Tabbed editing not yet implemented (single document per window)
 - Custom theme loading from filesystem not yet available
