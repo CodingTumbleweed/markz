@@ -1,6 +1,6 @@
 import { app, BrowserWindow, nativeImage } from 'electron'
 import path from 'path'
-import { registerIPC } from './ipc'
+import { registerIPC, setIPCMainWindow } from './ipc'
 import { buildMenu } from './menu'
 
 let mainWindow: BrowserWindow | null = null
@@ -17,6 +17,10 @@ function openFileInWindow(filePath: string): void {
     mainWindow.webContents.send('menu:open-recent', resolved)
   } else {
     fileToOpen = resolved
+    // Window was closed (Cmd+W) but app still running — recreate so Finder Open With works
+    if (app.isReady()) {
+      createWindow()
+    }
   }
 }
 
@@ -43,7 +47,7 @@ function createWindow(): void {
     show: false,
   })
 
-  registerIPC(mainWindow)
+  setIPCMainWindow(mainWindow)
   buildMenu(mainWindow)
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -64,6 +68,7 @@ function createWindow(): void {
 
   mainWindow.on('closed', () => {
     mainWindow = null
+    setIPCMainWindow(null)
   })
 }
 
@@ -103,6 +108,7 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     setDevDockIcon()
+    registerIPC()
     createWindow()
   })
 

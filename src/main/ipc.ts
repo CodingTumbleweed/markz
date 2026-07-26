@@ -13,14 +13,30 @@ import { exportToHTML } from './export/html'
 import fs from 'fs'
 
 let config: MarkzConfig
+let mainWindow: BrowserWindow | null = null
 const watchers = new Map<string, fs.FSWatcher>()
+let registered = false
 
-export function registerIPC(win: BrowserWindow): void {
+export function setIPCMainWindow(win: BrowserWindow | null): void {
+  mainWindow = win
+}
+
+function requireMainWindow(): BrowserWindow {
+  if (!mainWindow) {
+    throw new Error('No main window available')
+  }
+  return mainWindow
+}
+
+export function registerIPC(): void {
+  if (registered) return
+  registered = true
   config = loadConfig()
 
   ipcMain.handle('app:version', () => app.getVersion())
 
   ipcMain.handle('file:open', async () => {
+    const win = requireMainWindow()
     const result = await openFileDialog(win)
     if (result) {
       config = addRecentFile(config, result.filePath)
@@ -30,6 +46,7 @@ export function registerIPC(win: BrowserWindow): void {
   })
 
   ipcMain.handle('file:save', async (_event, content: string, filePath?: string) => {
+    const win = requireMainWindow()
     const savedPath = await saveFileDialog(win, content, filePath)
     if (savedPath) {
       config = addRecentFile(config, savedPath)
@@ -39,6 +56,7 @@ export function registerIPC(win: BrowserWindow): void {
   })
 
   ipcMain.handle('file:save-as', async (_event, content: string) => {
+    const win = requireMainWindow()
     const savedPath = await saveFileDialog(win, content)
     if (savedPath) {
       config = addRecentFile(config, savedPath)
@@ -76,7 +94,7 @@ export function registerIPC(win: BrowserWindow): void {
   })
 
   ipcMain.handle('folder:open', async () => {
-    return openFolderDialog(win)
+    return openFolderDialog(requireMainWindow())
   })
 
   ipcMain.handle('folder:list', (_event, dirPath: string) => {
@@ -92,7 +110,7 @@ export function registerIPC(win: BrowserWindow): void {
     try {
       const watcher = fs.watch(dirPath, { recursive: true }, (eventType, filename) => {
         if (filename && !filename.startsWith('.')) {
-          win.webContents.send('folder:changed', dirPath, eventType, filename)
+          mainWindow?.webContents.send('folder:changed', dirPath, eventType, filename)
         }
       })
       watchers.set(dirPath, watcher)
@@ -112,7 +130,7 @@ export function registerIPC(win: BrowserWindow): void {
   })
 
   ipcMain.handle('image:open-dialog', async () => {
-    return openImageDialog(win)
+    return openImageDialog(requireMainWindow())
   })
 
   ipcMain.handle('image:copy-to-assets', (_event, imagePath: string, documentPath: string, assetsFolder?: string) => {
@@ -136,10 +154,10 @@ export function registerIPC(win: BrowserWindow): void {
   })
 
   ipcMain.handle('export:pdf', async (_event, markdown: string, css: string, options?: Record<string, unknown>) => {
-    return exportToPDF(win, markdown, css, options as any)
+    return exportToPDF(requireMainWindow(), markdown, css, options as any)
   })
 
   ipcMain.handle('export:html', async (_event, markdown: string, css: string, title?: string) => {
-    return exportToHTML(win, markdown, css, title)
+    return exportToHTML(requireMainWindow(), markdown, css, title)
   })
 }
