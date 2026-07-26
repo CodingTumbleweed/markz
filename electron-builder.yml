@@ -21,6 +21,8 @@ mac:
   icon: build/icon.icns
   artifactName: "${productName}-${version}-${arch}.${ext}"
   identity: null
+  extendInfo:
+    LSMultipleInstancesProhibited: true
 
 win:
   target:

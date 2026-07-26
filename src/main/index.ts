@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, nativeImage } from 'electron'
 import path from 'path'
 import { registerIPC } from './ipc'
 import { buildMenu } from './menu'
@@ -6,9 +6,26 @@ import { buildMenu } from './menu'
 let mainWindow: BrowserWindow | null = null
 let fileToOpen: string | null = null
 
-// Handle file open from OS (double-click .md file or CLI arg)
-const cliFile = process.argv.find((arg) => /\.(md|markdown|mdown)$/i.test(arg))
-if (cliFile) fileToOpen = path.resolve(cliFile)
+const MD_FILE = /\.(md|markdown|mdown)$/i
+
+function openFileInWindow(filePath: string): void {
+  const resolved = path.resolve(filePath)
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
+    mainWindow.webContents.send('menu:open-recent', resolved)
+  } else {
+    fileToOpen = resolved
+  }
+}
+
+function focusMainWindow(): void {
+  if (!mainWindow) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -50,27 +67,56 @@ function createWindow(): void {
   })
 }
 
-// macOS: handle file open via Finder association
-app.on('open-file', (event, filePath) => {
-  event.preventDefault()
-  if (mainWindow) {
-    mainWindow.webContents.send('menu:open-recent', filePath)
-    mainWindow.focus()
-  } else {
-    fileToOpen = filePath
+function setDevDockIcon(): void {
+  if (process.platform === 'darwin' && process.env.VITE_DEV_SERVER_URL) {
+    const iconPath = path.join(__dirname, '../../build/icon.png')
+    const image = nativeImage.createFromPath(iconPath)
+    if (!image.isEmpty()) {
+      app.dock?.setIcon(image)
+    }
   }
-})
+}
 
-app.whenReady().then(createWindow)
+// Handle file open from OS (double-click .md file or CLI arg)
+const cliFile = process.argv.find((arg) => MD_FILE.test(arg))
+if (cliFile) fileToOpen = path.resolve(cliFile)
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+const gotLock = app.requestSingleInstanceLock()
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+if (!gotLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (_event, commandLine) => {
+    const mdArg = commandLine.find((arg) => MD_FILE.test(arg))
+    if (mdArg) {
+      openFileInWindow(mdArg)
+    } else {
+      focusMainWindow()
+    }
+  })
+
+  // macOS: handle file open via Finder association
+  app.on('open-file', (event, filePath) => {
+    event.preventDefault()
+    openFileInWindow(filePath)
+  })
+
+  app.whenReady().then(() => {
+    setDevDockIcon()
     createWindow()
-  }
-})
+  })
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit()
+    }
+  })
+
+  app.on('activate', () => {
+    if (mainWindow) {
+      focusMainWindow()
+    } else if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+    }
+  })
+}

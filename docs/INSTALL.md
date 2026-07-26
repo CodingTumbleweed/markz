@@ -142,12 +142,13 @@ npm run dev          # development
 npm run package:mac  # or package:win / package:linux
 ```
 
-Installers are written to `release/`.
+Installers are written to `release/`. After installing from GitHub Releases, delete any stale local build at `release/mac-arm64/Markz.app` to avoid duplicate Dock icons on macOS (see Troubleshooting).
 
 ## Troubleshooting
 
 | Issue | Suggestion |
 |-------|------------|
+| **Two Dock icons (Electron + Markz)** (macOS) | Multiple `Markz.app` bundles on disk (e.g. `/Applications/Markz.app` and `release/mac-arm64/Markz.app`). Quit all instances, delete the stale `release/` copy, keep only `/Applications/Markz.app`. During dev, exclude `node_modules` from Spotlight if `Electron.app` appears. ([#4](https://github.com/CodingTumbleweed/markz/issues/4)) |
 | **"Markz is damaged and can't be opened"** (macOS) | Not corruption — Gatekeeper quarantine on unsigned builds. Run `xattr -cr /Applications/Markz.app`, then right-click Markz → **Open** once. Common when opening `.md` files via **Open With**. ([#3](https://github.com/CodingTumbleweed/markz/issues/3)) |
 | App won't open on macOS | Use right-click → Open, or `xattr -cr /Applications/Markz.app` |
 | SmartScreen blocks Windows install | More info → Run anyway |

@@ -10,7 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Single-instance enforcement: `requestSingleInstanceLock`, macOS `LSMultipleInstancesProhibited`, unified file-open handler ([#4](https://github.com/CodingTumbleweed/markz/issues/4))
+- Markz dock icon during `npm run dev` on macOS (replaces default Electron icon) ([#4](https://github.com/CodingTumbleweed/markz/issues/4))
 - macOS troubleshooting for Gatekeeper "damaged" error when opening `.md` files via Finder ([#3](https://github.com/CodingTumbleweed/markz/issues/3))
+- macOS troubleshooting for duplicate Dock icons from stale local `release/` builds ([#4](https://github.com/CodingTumbleweed/markz/issues/4))
 
 ---
 
