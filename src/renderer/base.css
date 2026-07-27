@@ -15,6 +15,8 @@
   --markz-font-size: 16px;
   --markz-line-height: 1.6;
   --markz-content-width: 800px;
+  --markz-titlebar-height: 38px;
+  --markz-statusbar-height: 28px;
 }
 
 html, body {
@@ -32,6 +34,36 @@ html, body {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* macOS: draggable title strip (hiddenInset removes native title bar) */
+.markz-titlebar {
+  display: none;
+  flex-shrink: 0;
+  height: var(--markz-titlebar-height);
+  -webkit-app-region: drag;
+  app-region: drag;
+  background: var(--markz-bg);
+  border-bottom: 1px solid #e1e4e8;
+  padding-left: 78px; /* room for traffic-light buttons */
+}
+
+html.platform-darwin .markz-titlebar {
+  display: block;
+}
+
+html.platform-darwin .markz-sidebar {
+  top: var(--markz-titlebar-height);
+  height: calc(100% - var(--markz-statusbar-height) - var(--markz-titlebar-height));
+}
+
+html.platform-darwin .markz-outline-panel {
+  top: var(--markz-titlebar-height);
+  height: calc(100% - var(--markz-statusbar-height) - var(--markz-titlebar-height));
+}
+
+html.dark .markz-titlebar {
+  border-bottom-color: #30363d;
 }
 
 .cm-editor {
@@ -599,7 +631,7 @@ html.dark .markz-highlight {
   top: 0;
   right: 0;
   width: 220px;
-  height: calc(100% - 28px);
+  height: calc(100% - var(--markz-statusbar-height));
   background: #fafbfc;
   border-left: 1px solid #e1e4e8;
   overflow-y: auto;
@@ -660,7 +692,7 @@ html.dark .markz-highlight {
   top: 0;
   left: 0;
   width: 240px;
-  height: calc(100% - 28px);
+  height: calc(100% - var(--markz-statusbar-height));
   background: #f6f8fa;
   border-right: 1px solid #e1e4e8;
   overflow-y: auto;
@@ -686,6 +718,8 @@ html.dark .markz-highlight {
   letter-spacing: 0.05em;
   border-bottom: 1px solid #e1e4e8;
   flex-shrink: 0;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .markz-sidebar-actions {

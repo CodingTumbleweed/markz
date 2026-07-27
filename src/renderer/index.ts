@@ -1,5 +1,6 @@
 import './base.css'
 import 'katex/dist/katex.min.css'
+import { createTitleBar } from './components/titleBar'
 import { createEditor } from './editor/setup'
 import { createStatusBar, updateFileStatus } from './components/statusBar'
 import { createOutlinePanel } from './components/outlinePanel'
@@ -30,6 +31,7 @@ import { initZoom } from './components/zoom'
 
 const editorRoot = document.getElementById('editor-root')!
 
+createTitleBar(editorRoot)
 createSidebar(editorRoot)
 createOutlinePanel(editorRoot)
 const view = createEditor(editorRoot)
