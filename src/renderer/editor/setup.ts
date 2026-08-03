@@ -1,4 +1,4 @@
-import { EditorState } from '@codemirror/state'
+import { EditorState, Extension } from '@codemirror/state'
 import {
   EditorView,
   keymap,
@@ -31,7 +31,7 @@ import { typewriterModeState, typewriterPlugin } from './typewriterMode'
 import { handleImageDrop, handleImagePaste } from './imageInsert'
 import { smartPunctuationInputHandler } from './smartPunctuation'
 
-const welcomeDoc = `---
+export const welcomeDoc = `---
 title: Welcome to Markz
 author: You
 ---
@@ -122,58 +122,67 @@ graph LR
 **Shortcuts:** Cmd+B (bold), Cmd+I (italic), Cmd+1-6 (headings), Cmd+K (link), Cmd+, (preferences)
 `
 
-export function createEditor(parent: HTMLElement): EditorView {
-  const state = EditorState.create({
-    doc: welcomeDoc,
-    extensions: [
-      history(),
-      drawSelection(),
-      dropCursor(),
-      indentOnInput(),
-      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-      bracketMatching(),
-      highlightActiveLine(),
-      highlightSelectionMatches(),
-      closeBrackets(),
-      keymap.of([
-        ...closeBracketsKeymap,
-        ...markzKeymap,
-        { key: 'Enter', run: listContinuation },
-        ...defaultKeymap,
-        ...historyKeymap,
-        ...searchKeymap,
-        indentWithTab,
-      ]),
-      markdown({ base: markdownLanguage }),
-      markdownDecorations,
-      blockDecorations,
-      blockWidgetRangesField,
-      focusModeState,
-      focusModeDecorations,
-      typewriterModeState,
-      typewriterPlugin,
-      statusBarPlugin,
-      outlinePlugin,
-      EditorView.domEventHandlers({
-        drop(event, view) {
-          handleImageDrop(view, event)
-          return false
-        },
-        paste(event, view) {
-          const hasImage = event.clipboardData?.types.includes('Files')
-            && Array.from(event.clipboardData.files).some((f) => f.type.startsWith('image/'))
-          if (hasImage) {
-            event.preventDefault()
-            handleImagePaste(view)
-            return true
-          }
-          return false
-        },
-      }),
-      smartPunctuationInputHandler,
-      EditorView.lineWrapping,
-    ],
-  })
+export function createEditorExtensions(): Extension[] {
+  return [
+    history(),
+    drawSelection(),
+    dropCursor(),
+    indentOnInput(),
+    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    bracketMatching(),
+    highlightActiveLine(),
+    highlightSelectionMatches(),
+    closeBrackets(),
+    keymap.of([
+      ...closeBracketsKeymap,
+      ...markzKeymap,
+      { key: 'Enter', run: listContinuation },
+      ...defaultKeymap,
+      ...historyKeymap,
+      ...searchKeymap,
+      indentWithTab,
+    ]),
+    markdown({ base: markdownLanguage }),
+    markdownDecorations,
+    blockDecorations,
+    blockWidgetRangesField,
+    focusModeState,
+    focusModeDecorations,
+    typewriterModeState,
+    typewriterPlugin,
+    statusBarPlugin,
+    outlinePlugin,
+    EditorView.domEventHandlers({
+      drop(event, view) {
+        handleImageDrop(view, event)
+        return false
+      },
+      paste(event, view) {
+        const hasImage = event.clipboardData?.types.includes('Files')
+          && Array.from(event.clipboardData.files).some((f) => f.type.startsWith('image/'))
+        if (hasImage) {
+          event.preventDefault()
+          handleImagePaste(view)
+          return true
+        }
+        return false
+      },
+    }),
+    smartPunctuationInputHandler,
+    EditorView.lineWrapping,
+  ]
+}
 
-  return new EditorView({ state, parent })
+export function createEditorState(doc = ''): EditorState {
+  return EditorState.create({
+    doc,
+    extensions: createEditorExtensions(),
+  })
+}
+
+export function createEditor(parent: HTMLElement, initialDoc = welcomeDoc): EditorView {
+  return new EditorView({
+    state: createEditorState(initialDoc),
+    parent,
+  })
 }

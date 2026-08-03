@@ -51,7 +51,7 @@ export const electronAPI: ElectronAPI = {
       'menu:open-folder', 'menu:toggle-sidebar', 'menu:toggle-outline',
       'menu:open-quickly', 'menu:open-recent', 'menu:clear-recent',
       'menu:command-palette', 'menu:toggle-focus', 'menu:toggle-typewriter',
-      'menu:preferences', 'menu:insert-image',
+      'menu:preferences', 'menu:insert-image', 'menu:close-tab',
     ]
     channels.forEach((channel) => {
       ipcRenderer.on(channel, (_event, ...args) => {

@@ -96,7 +96,13 @@ export function buildMenu(win: BrowserWindow): void {
           ],
         },
         { type: 'separator' },
-        isMac ? { role: 'close' as const } : { role: 'quit' as const },
+        {
+          label: 'Close Tab',
+          accelerator: 'CmdOrCtrl+W',
+          click: () => win.webContents.send('menu:close-tab'),
+        },
+        { type: 'separator' },
+        isMac ? { role: 'quit' as const } : { role: 'quit' as const },
       ],
     },
     {

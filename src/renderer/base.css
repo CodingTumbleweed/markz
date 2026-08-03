@@ -16,7 +16,9 @@
   --markz-line-height: 1.6;
   --markz-content-width: 800px;
   --markz-titlebar-height: 38px;
+  --markz-tabbar-height: 32px;
   --markz-statusbar-height: 28px;
+  --markz-chrome-height: calc(var(--markz-titlebar-height) + var(--markz-tabbar-height));
 }
 
 html, body {
@@ -53,17 +55,143 @@ html.platform-darwin .markz-titlebar {
 }
 
 html.platform-darwin .markz-sidebar {
-  top: var(--markz-titlebar-height);
-  height: calc(100% - var(--markz-statusbar-height) - var(--markz-titlebar-height));
+  top: var(--markz-chrome-height);
+  height: calc(100% - var(--markz-statusbar-height) - var(--markz-chrome-height));
 }
 
 html.platform-darwin .markz-outline-panel {
-  top: var(--markz-titlebar-height);
-  height: calc(100% - var(--markz-statusbar-height) - var(--markz-titlebar-height));
+  top: var(--markz-chrome-height);
+  height: calc(100% - var(--markz-statusbar-height) - var(--markz-chrome-height));
+}
+
+html:not(.platform-darwin) .markz-sidebar {
+  top: var(--markz-tabbar-height);
+  height: calc(100% - var(--markz-statusbar-height) - var(--markz-tabbar-height));
+}
+
+html:not(.platform-darwin) .markz-outline-panel {
+  top: var(--markz-tabbar-height);
+  height: calc(100% - var(--markz-statusbar-height) - var(--markz-tabbar-height));
 }
 
 html.dark .markz-titlebar {
   border-bottom-color: #30363d;
+}
+
+/* Tab bar */
+.markz-tab-bar {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  height: var(--markz-tabbar-height);
+  background: #f6f8fa;
+  border-bottom: 1px solid #e1e4e8;
+  overflow: hidden;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.markz-tab-list {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 0;
+}
+
+.markz-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0 0.75em;
+  max-width: 180px;
+  border-right: 1px solid #e1e4e8;
+  cursor: pointer;
+  font-size: 0.8em;
+  color: #586069;
+  background: transparent;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.markz-tab:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.markz-tab.active {
+  background: var(--markz-bg);
+  color: #24292e;
+  font-weight: 500;
+}
+
+.markz-tab.dirty .markz-tab-label::after {
+  content: ' •';
+  color: var(--markz-accent);
+}
+
+.markz-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.markz-tab-close {
+  border: none;
+  background: transparent;
+  color: #959da5;
+  cursor: pointer;
+  font-size: 1.1em;
+  line-height: 1;
+  padding: 0 0.15em;
+  border-radius: 3px;
+}
+
+.markz-tab-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #24292e;
+}
+
+.markz-tab-new {
+  border: none;
+  background: transparent;
+  color: #586069;
+  cursor: pointer;
+  font-size: 1.2em;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.markz-tab-new:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #24292e;
+}
+
+html.dark .markz-tab-bar {
+  background: #161b22;
+  border-bottom-color: #30363d;
+}
+
+html.dark .markz-tab {
+  border-right-color: #30363d;
+  color: #8b949e;
+}
+
+html.dark .markz-tab.active {
+  background: var(--markz-bg);
+  color: #c9d1d9;
+}
+
+html.dark .markz-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html.dark .markz-tab-close {
+  color: #8b949e;
+}
+
+html.dark .markz-tab-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #c9d1d9;
 }
 
 .cm-editor {

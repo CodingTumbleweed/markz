@@ -2,11 +2,13 @@ import './base.css'
 import 'katex/dist/katex.min.css'
 import { createTitleBar } from './components/titleBar'
 import { createEditor } from './editor/setup'
-import { createStatusBar, updateFileStatus } from './components/statusBar'
+import { TabManager } from './editor/tabManager'
+import { createTabBar } from './components/tabBar'
+import { createStatusBar } from './components/statusBar'
 import { createOutlinePanel } from './components/outlinePanel'
 import {
   createSidebar, toggleSidebar, loadFolder,
-  setSidebarCallbacks, setCurrentFile, getWorkspaceRoot, refreshSidebar,
+  setSidebarCallbacks, getWorkspaceRoot, refreshSidebar,
 } from './components/sidebar'
 import {
   open as openQuickly, setOpenQuicklyCallback, updateFileIndex,
@@ -15,7 +17,6 @@ import {
   registerCommands, openCommandPalette, PaletteCommand,
 } from './components/commandPalette'
 import { openSearchPanel } from '@codemirror/search'
-import { EditorView } from '@codemirror/view'
 import { wrapSelection, setHeading } from './editor/keymap'
 import { toggleFocusMode, focusModeState } from './editor/focusMode'
 import { toggleTypewriterMode, typewriterModeState } from './editor/typewriterMode'
@@ -34,10 +35,11 @@ const editorRoot = document.getElementById('editor-root')!
 createTitleBar(editorRoot)
 createSidebar(editorRoot)
 createOutlinePanel(editorRoot)
-const view = createEditor(editorRoot)
+const view = createEditor(editorRoot, '')
+const tabManager = new TabManager(view)
+createTabBar(editorRoot, tabManager)
 createStatusBar(editorRoot)
 
-// Theme and preferences initialization
 initThemeSystem()
 ;(async () => {
   const config = await window.electronAPI.getConfig()
@@ -53,96 +55,18 @@ setPreferencesSaveCallback(async (partial) => {
   await window.electronAPI.setConfig(partial)
 })
 
-let currentFilePath: string | null = null
-let savedContent: string = view.state.doc.toString()
-
-setImageInsertFileGetter(() => currentFilePath)
+setImageInsertFileGetter(() => tabManager.getActiveFilePath())
 initZoom()
-let lastKnownMtime: number | null = null
+
 let sourceMode = false
 
-function markModified(): void {
-  const current = view.state.doc.toString()
-  const name = currentFilePath
-    ? currentFilePath.split('/').pop() || 'Untitled'
-    : 'Untitled'
-  updateFileStatus(name, current !== savedContent)
+function toggleSourceMode() {
+  sourceMode = !sourceMode
+  document.body.classList.toggle('markz-source-mode', sourceMode)
 }
 
-function loadContent(filePath: string, content: string): void {
-  currentFilePath = filePath
-  savedContent = content
-  view.dispatch({
-    changes: { from: 0, to: view.state.doc.length, insert: content },
-  })
-  markModified()
-  setCurrentFile(filePath)
-  trackMtime(filePath)
-}
-
-async function openFileByPath(filePath: string): Promise<void> {
-  try {
-    const content = await window.electronAPI.readFile(filePath)
-    loadContent(filePath, content)
-  } catch (err) {
-    console.error('Failed to open file:', err)
-  }
-}
-
-async function trackMtime(filePath: string) {
-  const stat = await window.electronAPI.fileStat(filePath)
-  lastKnownMtime = stat?.mtime ?? null
-}
-
-// Auto-save
-let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
-
-function scheduleAutoSave(): void {
-  if (autoSaveTimer) clearTimeout(autoSaveTimer)
-  if (!currentFilePath) return
-  autoSaveTimer = setTimeout(async () => {
-    const content = view.state.doc.toString()
-    if (content !== savedContent && currentFilePath) {
-      await window.electronAPI.writeFile(currentFilePath, content)
-      savedContent = content
-      markModified()
-      trackMtime(currentFilePath)
-    }
-  }, 5000)
-}
-
-// Dispatch wrapper for change tracking
-const originalDispatch = view.dispatch.bind(view)
-;(view as any).dispatch = function (...args: any[]) {
-  originalDispatch(...args)
-  markModified()
-  scheduleAutoSave()
-}
-
-// External change detection: poll every 3s
-setInterval(async () => {
-  if (!currentFilePath || lastKnownMtime === null) return
-  const stat = await window.electronAPI.fileStat(currentFilePath)
-  if (!stat) return
-  if (stat.mtime > lastKnownMtime) {
-    lastKnownMtime = stat.mtime
-    const current = view.state.doc.toString()
-    if (current === savedContent) {
-      const content = await window.electronAPI.readFile(currentFilePath)
-      if (content !== savedContent) {
-        savedContent = content
-        view.dispatch({
-          changes: { from: 0, to: view.state.doc.length, insert: content },
-        })
-        markModified()
-      }
-    }
-  }
-}, 3000)
-
-// Sidebar callbacks
 setSidebarCallbacks({
-  onFileOpen: (filePath) => openFileByPath(filePath),
+  onFileOpen: (filePath) => tabManager.openFileByPath(filePath),
 
   onFileCreate: async (dirPath) => {
     const name = prompt('New file name:', 'untitled.md')
@@ -151,36 +75,25 @@ setSidebarCallbacks({
     const fullPath = dirPath + sep + name
     await window.electronAPI.createFile(fullPath)
     refreshSidebar()
-    await openFileByPath(fullPath)
+    await tabManager.openFileByPath(fullPath)
   },
 
   onFileRename: async (oldPath, newPath) => {
     await window.electronAPI.renameFile(oldPath, newPath)
-    if (currentFilePath === oldPath) {
-      currentFilePath = newPath
-      markModified()
-      setCurrentFile(newPath)
-    }
+    tabManager.onFileRenamed(oldPath, newPath)
     refreshSidebar()
   },
 
   onFileDelete: async (filePath) => {
     if (!confirm(`Move "${filePath.split('/').pop()}" to trash?`)) return
     await window.electronAPI.deleteFile(filePath)
-    if (currentFilePath === filePath) {
-      currentFilePath = null
-      savedContent = ''
-      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: '' } })
-      markModified()
-    }
+    tabManager.onFileDeleted(filePath)
     refreshSidebar()
   },
 })
 
-// Open Quickly callback
-setOpenQuicklyCallback((filePath) => openFileByPath(filePath))
+setOpenQuicklyCallback((filePath) => tabManager.openFileByPath(filePath))
 
-// Watch for folder changes
 window.electronAPI.onFolderChanged(() => {
   refreshSidebar()
   const root = getWorkspaceRoot()
@@ -191,19 +104,13 @@ window.electronAPI.onFolderChanged(() => {
   }
 })
 
-// Source mode toggle helper
-function toggleSourceMode() {
-  sourceMode = !sourceMode
-  document.body.classList.toggle('markz-source-mode', sourceMode)
-}
-
-// Command palette commands
 const commands: PaletteCommand[] = [
   { id: 'new', label: 'File: New', shortcut: 'Cmd+N', action: () => dispatchMenu('new') },
   { id: 'open', label: 'File: Open…', shortcut: 'Cmd+O', action: () => dispatchMenu('open') },
   { id: 'open-folder', label: 'File: Open Folder…', action: () => dispatchMenu('open-folder') },
   { id: 'save', label: 'File: Save', shortcut: 'Cmd+S', action: () => dispatchMenu('save') },
   { id: 'save-as', label: 'File: Save As…', shortcut: 'Cmd+Shift+S', action: () => dispatchMenu('save-as') },
+  { id: 'close-tab', label: 'File: Close Tab', shortcut: 'Cmd+W', action: () => dispatchMenu('close-tab') },
   { id: 'find', label: 'Edit: Find', shortcut: 'Cmd+F', action: () => openSearchPanel(view) },
   { id: 'replace', label: 'Edit: Find and Replace', action: () => openSearchPanel(view) },
   { id: 'toggle-sidebar', label: 'View: Toggle Sidebar', shortcut: 'Cmd+\\', action: () => toggleSidebar() },
@@ -237,25 +144,14 @@ function dispatchMenu(action: string) {
   menuHandler(action)
 }
 
-// Menu actions handler
 async function menuHandler(action: string, ...args: unknown[]) {
   switch (action) {
-    case 'new': {
-      currentFilePath = null
-      savedContent = ''
-      lastKnownMtime = null
-      view.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: '' },
-      })
-      markModified()
-      setCurrentFile(null)
+    case 'new':
+      tabManager.newUntitled()
       break
-    }
     case 'open': {
       const result = await window.electronAPI.openFile()
-      if (result) {
-        loadContent(result.filePath, result.content)
-      }
+      if (result) tabManager.loadFromDialog(result.filePath, result.content)
       break
     }
     case 'open-folder': {
@@ -282,58 +178,36 @@ async function menuHandler(action: string, ...args: unknown[]) {
     }
     case 'open-recent': {
       const filePath = args[0] as string
-      if (filePath) await openFileByPath(filePath)
+      if (filePath) await tabManager.openFileByPath(filePath)
       break
     }
-    case 'clear-recent': {
+    case 'clear-recent':
       await window.electronAPI.setConfig({ recentFiles: [] })
       break
-    }
-    case 'save': {
-      const content = view.state.doc.toString()
-      const path = await window.electronAPI.saveFile(content, currentFilePath || undefined)
-      if (path) {
-        currentFilePath = path
-        savedContent = content
-        markModified()
-        setCurrentFile(path)
-        trackMtime(path)
-      }
+    case 'save':
+      await tabManager.saveActive()
       break
-    }
-    case 'save-as': {
-      const content = view.state.doc.toString()
-      const path = await window.electronAPI.saveFileAs(content)
-      if (path) {
-        currentFilePath = path
-        savedContent = content
-        markModified()
-        setCurrentFile(path)
-        trackMtime(path)
-      }
+    case 'save-as':
+      await tabManager.saveActiveAs()
       break
-    }
-    case 'find': {
+    case 'close-tab':
+      await tabManager.closeActiveTab()
+      break
+    case 'find':
+    case 'replace':
       openSearchPanel(view)
       break
-    }
-    case 'replace': {
-      openSearchPanel(view)
-      break
-    }
-    case 'toggle-sidebar': {
+    case 'toggle-sidebar':
       toggleSidebar()
       break
-    }
     case 'toggle-outline': {
       const panel = document.getElementById('outline-panel')
       if (panel) panel.classList.toggle('visible')
       break
     }
-    case 'toggle-source': {
+    case 'toggle-source':
       toggleSourceMode()
       break
-    }
     case 'toggle-focus': {
       const current = view.state.field(focusModeState)
       view.dispatch({ effects: toggleFocusMode.of(!current) })
@@ -344,10 +218,9 @@ async function menuHandler(action: string, ...args: unknown[]) {
       view.dispatch({ effects: toggleTypewriterMode.of(!current) })
       break
     }
-    case 'command-palette': {
+    case 'command-palette':
       openCommandPalette()
       break
-    }
     case 'format': {
       view.focus()
       const fmt = args[0] as string
@@ -359,24 +232,18 @@ async function menuHandler(action: string, ...args: unknown[]) {
       if (fmt === 'h3') setHeading(view, 3)
       break
     }
-    case 'export-pdf': {
-      const content = view.state.doc.toString()
-      await window.electronAPI.exportPDF(content, '', {})
+    case 'export-pdf':
+      await window.electronAPI.exportPDF(tabManager.getActiveContent(), '', {})
       break
-    }
-    case 'export-html': {
-      const content = view.state.doc.toString()
-      await window.electronAPI.exportHTML(content, '')
+    case 'export-html':
+      await window.electronAPI.exportHTML(tabManager.getActiveContent(), '')
       break
-    }
-    case 'insert-image': {
+    case 'insert-image':
       await insertImageFromDialog(view)
       break
-    }
-    case 'preferences': {
+    case 'preferences':
       openPreferences()
       break
-    }
   }
 }
 
@@ -386,5 +253,9 @@ document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === ',') {
     e.preventDefault()
     openPreferences()
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+    e.preventDefault()
+    tabManager.closeActiveTab()
   }
 })

@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Multi-document tab bar: open multiple files in tabs with separate undo history per tab (F-12 / FR-4.6)
+- Close Tab (`Cmd+W`) closes the active tab; last tab shows welcome document
+
 ### Fixed
 
 - macOS window can be dragged via a top title-bar strip when using `hiddenInset` title bar ([#5](https://github.com/CodingTumbleweed/markz/issues/5))
