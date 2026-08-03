@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.2.0-beta.3] -- 2026-07-06
+
 ### Added
 
 - Multi-document tab bar: open multiple files in tabs with separate undo history per tab (F-12 / FR-4.6)
