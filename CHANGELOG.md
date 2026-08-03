@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Multi-document tab bar: open multiple files in tabs with separate undo history per tab (F-12 / FR-4.6)
 - Close Tab (`Cmd+W`) closes the active tab; last tab shows welcome document
+- Global workspace search (`Cmd+Shift+F`): search all files in open folder and jump to match (F-4 / FR-4.4)
 
 ### Fixed
 

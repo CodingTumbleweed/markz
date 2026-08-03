@@ -14,6 +14,9 @@ import {
   open as openQuickly, setOpenQuicklyCallback, updateFileIndex,
 } from './components/openQuickly'
 import {
+  openGlobalSearch, setGlobalSearchCallbacks,
+} from './components/globalSearch'
+import {
   registerCommands, openCommandPalette, PaletteCommand,
 } from './components/commandPalette'
 import { openSearchPanel } from '@codemirror/search'
@@ -94,6 +97,11 @@ setSidebarCallbacks({
 
 setOpenQuicklyCallback((filePath) => tabManager.openFileByPath(filePath))
 
+setGlobalSearchCallbacks(
+  (match) => tabManager.openFileAtMatch(match.filePath, match.offset, match.matchLength),
+  () => getWorkspaceRoot(),
+)
+
 window.electronAPI.onFolderChanged(() => {
   refreshSidebar()
   const root = getWorkspaceRoot()
@@ -111,6 +119,7 @@ const commands: PaletteCommand[] = [
   { id: 'save', label: 'File: Save', shortcut: 'Cmd+S', action: () => dispatchMenu('save') },
   { id: 'save-as', label: 'File: Save As…', shortcut: 'Cmd+Shift+S', action: () => dispatchMenu('save-as') },
   { id: 'close-tab', label: 'File: Close Tab', shortcut: 'Cmd+W', action: () => dispatchMenu('close-tab') },
+  { id: 'global-search', label: 'Search: In Workspace', shortcut: 'Cmd+Shift+F', action: () => dispatchMenu('global-search') },
   { id: 'find', label: 'Edit: Find', shortcut: 'Cmd+F', action: () => openSearchPanel(view) },
   { id: 'replace', label: 'Edit: Find and Replace', action: () => openSearchPanel(view) },
   { id: 'toggle-sidebar', label: 'View: Toggle Sidebar', shortcut: 'Cmd+\\', action: () => toggleSidebar() },
@@ -192,6 +201,9 @@ async function menuHandler(action: string, ...args: unknown[]) {
       break
     case 'close-tab':
       await tabManager.closeActiveTab()
+      break
+    case 'global-search':
+      openGlobalSearch()
       break
     case 'find':
     case 'replace':

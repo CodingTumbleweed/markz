@@ -125,6 +125,11 @@ export function buildMenu(win: BrowserWindow): void {
           accelerator: isMac ? 'Cmd+Alt+F' : 'Ctrl+H',
           click: () => win.webContents.send('menu:replace'),
         },
+        {
+          label: 'Search in Workspace…',
+          accelerator: 'CmdOrCtrl+Shift+F',
+          click: () => win.webContents.send('menu:global-search'),
+        },
         { role: 'selectAll' as const },
         { type: 'separator' as const },
         ...(!isMac ? [{

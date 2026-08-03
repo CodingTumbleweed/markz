@@ -9,6 +9,15 @@ export interface FileStat {
   size: number
 }
 
+export interface SearchMatch {
+  filePath: string
+  line: number
+  column: number
+  preview: string
+  offset: number
+  matchLength: number
+}
+
 export interface ImageInsertResult {
   markdownPath: string
   absolutePath: string
@@ -30,6 +39,7 @@ export interface ElectronAPI {
   openFolder: () => Promise<string | null>
   listDirectory: (dirPath: string) => Promise<DirEntry[]>
   listAllFiles: (dirPath: string) => Promise<string[]>
+  searchWorkspace: (root: string, query: string) => Promise<SearchMatch[]>
   watchFolder: (dirPath: string) => Promise<boolean>
   unwatchFolder: (dirPath: string) => Promise<boolean>
   onFolderChanged: (callback: (dirPath: string, eventType: string, filename: string) => void) => void

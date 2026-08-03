@@ -10,6 +10,7 @@ import {
 import { loadConfig, saveConfig, addRecentFile, MarkzConfig } from './config'
 import { exportToPDF } from './export/pdf'
 import { exportToHTML } from './export/html'
+import { searchWorkspace } from './search'
 import fs from 'fs'
 
 let config: MarkzConfig
@@ -103,6 +104,10 @@ export function registerIPC(): void {
 
   ipcMain.handle('folder:list-all', (_event, dirPath: string) => {
     return collectAllFiles(dirPath)
+  })
+
+  ipcMain.handle('search:workspace', (_event, root: string, query: string) => {
+    return searchWorkspace(root, query)
   })
 
   ipcMain.handle('folder:watch', (_event, dirPath: string) => {

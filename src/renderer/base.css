@@ -1072,6 +1072,49 @@ html.dark .markz-highlight {
   max-width: 200px;
 }
 
+/* Global search results */
+.markz-search-modal {
+  width: 560px;
+  max-height: 440px;
+}
+
+.markz-search-hint {
+  padding: 12px 16px;
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.markz-search-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.markz-search-location {
+  font-family: var(--markz-mono-font);
+  font-size: 0.75em;
+  color: var(--markz-accent);
+  font-weight: 500;
+}
+
+.markz-search-preview {
+  font-size: 0.85em;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+html.dark .markz-search-preview {
+  color: #8b949e;
+}
+
+html.dark .markz-search-hint {
+  color: #8b949e;
+}
+
 /* Command palette list */
 .markz-palette-list {
   overflow-y: auto;
