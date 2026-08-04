@@ -9,6 +9,7 @@ export interface MarkzConfig {
   general: {
     autoSave: boolean
     autoSaveInterval: number
+    sidebarView: 'tree' | 'list'
   }
   appearance: {
     theme: string
@@ -29,6 +30,7 @@ const defaultConfig: MarkzConfig = {
   general: {
     autoSave: true,
     autoSaveInterval: 5000,
+    sidebarView: 'tree',
   },
   appearance: {
     theme: 'github',

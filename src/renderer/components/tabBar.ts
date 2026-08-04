@@ -1,9 +1,55 @@
 import type { TabManager, TabInfo } from '../editor/tabManager'
+import { ICON_OUTLINE, ICON_SIDEBAR } from './icons'
 
-export function createTabBar(parent: HTMLElement, manager: TabManager): HTMLElement {
+export interface TabBarOptions {
+  onToggleSidebar?: () => void
+  onToggleOutline?: () => void
+}
+
+export function syncTabBarChromeState(): void {
+  const sidebar = document.getElementById('sidebar')
+  const outline = document.getElementById('outline-panel')
+  document.getElementById('chrome-sidebar')?.classList.toggle(
+    'active',
+    !!sidebar?.classList.contains('visible'),
+  )
+  document.getElementById('chrome-outline')?.classList.toggle(
+    'active',
+    !!outline?.classList.contains('visible'),
+  )
+}
+
+export function createTabBar(
+  parent: HTMLElement,
+  manager: TabManager,
+  options: TabBarOptions = {},
+): HTMLElement {
   const bar = document.createElement('div')
   bar.className = 'markz-tab-bar'
   bar.id = 'tab-bar'
+
+  const chromeLeft = document.createElement('div')
+  chromeLeft.className = 'markz-tab-chrome-left'
+
+  const sidebarBtn = document.createElement('button')
+  sidebarBtn.className = 'markz-chrome-btn'
+  sidebarBtn.id = 'chrome-sidebar'
+  sidebarBtn.type = 'button'
+  sidebarBtn.title = 'Toggle Sidebar (Cmd+\\)'
+  sidebarBtn.innerHTML = ICON_SIDEBAR
+  sidebarBtn.addEventListener('click', () => options.onToggleSidebar?.())
+  chromeLeft.appendChild(sidebarBtn)
+
+  const outlineBtn = document.createElement('button')
+  outlineBtn.className = 'markz-chrome-btn'
+  outlineBtn.id = 'chrome-outline'
+  outlineBtn.type = 'button'
+  outlineBtn.title = 'Toggle Outline (Cmd+Shift+O)'
+  outlineBtn.innerHTML = ICON_OUTLINE
+  outlineBtn.addEventListener('click', () => options.onToggleOutline?.())
+  chromeLeft.appendChild(outlineBtn)
+
+  bar.appendChild(chromeLeft)
 
   const tabsContainer = document.createElement('div')
   tabsContainer.className = 'markz-tab-list'
@@ -17,7 +63,6 @@ export function createTabBar(parent: HTMLElement, manager: TabManager): HTMLElem
   newBtn.addEventListener('click', () => manager.newTab())
   bar.appendChild(newBtn)
 
-  // Insert after title bar if present, else at top
   const titleBar = parent.querySelector('.markz-titlebar')
   if (titleBar?.nextSibling) {
     parent.insertBefore(bar, titleBar.nextSibling)
@@ -26,6 +71,7 @@ export function createTabBar(parent: HTMLElement, manager: TabManager): HTMLElem
   }
 
   manager.setTabsChangeListener(() => renderTabs(tabsContainer, manager))
+  syncTabBarChromeState()
 
   return bar
 }

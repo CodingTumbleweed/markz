@@ -49,7 +49,7 @@ export const electronAPI: ElectronAPI = {
       'menu:new', 'menu:open', 'menu:save', 'menu:save-as',
       'menu:find', 'menu:replace', 'menu:toggle-source', 'menu:format',
       'menu:export-pdf', 'menu:export-html',
-      'menu:open-folder', 'menu:toggle-sidebar', 'menu:toggle-outline',
+      'menu:open-folder', 'menu:toggle-sidebar', 'menu:toggle-sidebar-view', 'menu:toggle-outline',
       'menu:open-quickly', 'menu:open-recent', 'menu:clear-recent',
       'menu:command-palette', 'menu:toggle-focus', 'menu:toggle-typewriter',
       'menu:preferences', 'menu:insert-image', 'menu:close-tab', 'menu:global-search',

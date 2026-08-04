@@ -35,6 +35,15 @@ export function createOutlinePanel(parent: HTMLElement): HTMLElement {
   return panel
 }
 
+export function toggleOutline(): void {
+  const panel = document.getElementById('outline-panel')
+  if (panel) panel.classList.toggle('visible')
+}
+
+export function isOutlineVisible(): boolean {
+  return document.getElementById('outline-panel')?.classList.contains('visible') ?? false
+}
+
 export function updateOutlinePanel(items: OutlineItem[], view: EditorView): void {
   const list = document.getElementById('outline-list')
   if (!list) return

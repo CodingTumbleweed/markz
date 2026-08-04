@@ -99,6 +99,42 @@ html.dark .markz-titlebar {
   min-width: 0;
 }
 
+.markz-tab-chrome-left {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  border-right: 1px solid #e1e4e8;
+}
+
+.markz-chrome-btn {
+  border: none;
+  background: transparent;
+  color: #586069;
+  cursor: pointer;
+  width: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.markz-chrome-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #24292e;
+}
+
+.markz-chrome-btn.active {
+  background: rgba(0, 102, 204, 0.12);
+  color: var(--markz-accent);
+}
+
+.markz-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 .markz-tab {
   display: flex;
   align-items: center;
@@ -169,6 +205,24 @@ html.dark .markz-titlebar {
 html.dark .markz-tab-bar {
   background: #161b22;
   border-bottom-color: #30363d;
+}
+
+html.dark .markz-tab-chrome-left {
+  border-right-color: #30363d;
+}
+
+html.dark .markz-chrome-btn {
+  color: #8b949e;
+}
+
+html.dark .markz-chrome-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #c9d1d9;
+}
+
+html.dark .markz-chrome-btn.active {
+  background: rgba(88, 166, 255, 0.12);
+  color: #58a6ff;
 }
 
 html.dark .markz-tab {
@@ -870,6 +924,45 @@ html.dark .markz-highlight {
   padding: 0;
 }
 
+.markz-sidebar-btn .markz-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.markz-sidebar-view-btn.active {
+  background: rgba(0, 102, 204, 0.12);
+  border-color: var(--markz-accent);
+  color: var(--markz-accent);
+}
+
+.markz-new-file-row {
+  padding: 4px 8px;
+  margin: 0 4px;
+}
+
+.markz-new-file-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  border: 1px solid var(--markz-accent);
+  border-radius: 3px;
+  padding: 2px 6px;
+  outline: none;
+  background: #fff;
+}
+
+html.dark .markz-new-file-input {
+  background: #0d1117;
+  color: #c9d1d9;
+  border-color: #58a6ff;
+}
+
+html.dark .markz-sidebar-view-btn.active {
+  background: rgba(88, 166, 255, 0.12);
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+
 .markz-sidebar-btn:hover {
   background: rgba(0, 0, 0, 0.06);
   border-color: #ddd;
@@ -947,6 +1040,70 @@ html.dark .markz-highlight {
 .markz-tree-item.active {
   background: rgba(0, 102, 204, 0.1);
   color: var(--markz-accent);
+}
+
+/* File list sidebar view */
+.markz-file-list {
+  padding: 4px 0;
+}
+
+.markz-list-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 5px 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 3px;
+  margin: 0 4px;
+}
+
+.markz-list-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.markz-list-item.active {
+  background: rgba(0, 102, 204, 0.1);
+  color: var(--markz-accent);
+}
+
+.markz-list-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.markz-list-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95em;
+}
+
+.markz-list-dir {
+  font-size: 0.72em;
+  color: #999;
+  padding-left: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+html.dark .markz-list-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html.dark .markz-list-item.active {
+  background: rgba(88, 166, 255, 0.12);
+  color: #58a6ff;
+}
+
+html.dark .markz-list-dir {
+  color: #8b949e;
 }
 
 .markz-tree-chevron {

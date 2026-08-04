@@ -3,12 +3,13 @@ import 'katex/dist/katex.min.css'
 import { createTitleBar } from './components/titleBar'
 import { createEditor } from './editor/setup'
 import { TabManager } from './editor/tabManager'
-import { createTabBar } from './components/tabBar'
+import { createTabBar, syncTabBarChromeState } from './components/tabBar'
 import { createStatusBar } from './components/statusBar'
-import { createOutlinePanel } from './components/outlinePanel'
+import { createOutlinePanel, toggleOutline } from './components/outlinePanel'
 import {
   createSidebar, toggleSidebar, loadFolder,
   setSidebarCallbacks, getWorkspaceRoot, refreshSidebar,
+  setSidebarView, toggleSidebarView,
 } from './components/sidebar'
 import {
   open as openQuickly, setOpenQuicklyCallback, updateFileIndex,
@@ -35,12 +36,25 @@ import { initZoom } from './components/zoom'
 
 const editorRoot = document.getElementById('editor-root')!
 
+function handleToggleSidebar() {
+  toggleSidebar()
+  syncTabBarChromeState()
+}
+
+function handleToggleOutline() {
+  toggleOutline()
+  syncTabBarChromeState()
+}
+
 createTitleBar(editorRoot)
 createSidebar(editorRoot)
 createOutlinePanel(editorRoot)
 const view = createEditor(editorRoot, '')
 const tabManager = new TabManager(view)
-createTabBar(editorRoot, tabManager)
+createTabBar(editorRoot, tabManager, {
+  onToggleSidebar: handleToggleSidebar,
+  onToggleOutline: handleToggleOutline,
+})
 createStatusBar(editorRoot)
 
 initThemeSystem()
@@ -53,6 +67,10 @@ initThemeSystem()
   applyFontFamily((appearance.fontFamily as string) || '')
   applyWritingWidth((appearance.writingWidth as number) || 800)
   loadPreferencesState(config)
+  const general = (config.general || {}) as Record<string, unknown>
+  const sidebarView = general.sidebarView === 'list' ? 'list' : 'tree'
+  await setSidebarView(sidebarView, false)
+  syncTabBarChromeState()
 })()
 setPreferencesSaveCallback(async (partial) => {
   await window.electronAPI.setConfig(partial)
@@ -71,11 +89,10 @@ function toggleSourceMode() {
 setSidebarCallbacks({
   onFileOpen: (filePath) => tabManager.openFileByPath(filePath),
 
-  onFileCreate: async (dirPath) => {
-    const name = prompt('New file name:', 'untitled.md')
-    if (!name) return
+  onFileCreate: async (dirPath, name) => {
+    const fileName = name || 'untitled.md'
     const sep = dirPath.endsWith('/') ? '' : '/'
-    const fullPath = dirPath + sep + name
+    const fullPath = dirPath + sep + fileName
     await window.electronAPI.createFile(fullPath)
     refreshSidebar()
     await tabManager.openFileByPath(fullPath)
@@ -122,11 +139,9 @@ const commands: PaletteCommand[] = [
   { id: 'global-search', label: 'Search: In Workspace', shortcut: 'Cmd+Shift+F', action: () => dispatchMenu('global-search') },
   { id: 'find', label: 'Edit: Find', shortcut: 'Cmd+F', action: () => openSearchPanel(view) },
   { id: 'replace', label: 'Edit: Find and Replace', action: () => openSearchPanel(view) },
-  { id: 'toggle-sidebar', label: 'View: Toggle Sidebar', shortcut: 'Cmd+\\', action: () => toggleSidebar() },
-  { id: 'toggle-outline', label: 'View: Toggle Outline', shortcut: 'Cmd+Shift+O', action: () => {
-    const panel = document.getElementById('outline-panel')
-    if (panel) panel.classList.toggle('visible')
-  }},
+  { id: 'toggle-sidebar', label: 'View: Toggle Sidebar', shortcut: 'Cmd+\\', action: () => handleToggleSidebar() },
+  { id: 'toggle-sidebar-view', label: 'View: Toggle Sidebar File List', action: () => dispatchMenu('toggle-sidebar-view') },
+  { id: 'toggle-outline', label: 'View: Toggle Outline', shortcut: 'Cmd+Shift+O', action: () => handleToggleOutline() },
   { id: 'source-mode', label: 'View: Toggle Source Mode', shortcut: 'Cmd+/', action: () => toggleSourceMode() },
   { id: 'focus-mode', label: 'View: Toggle Focus Mode', action: () => {
     const current = view.state.field(focusModeState)
@@ -171,6 +186,7 @@ async function menuHandler(action: string, ...args: unknown[]) {
         if (sidebar && !sidebar.classList.contains('visible')) {
           sidebar.classList.add('visible')
         }
+        syncTabBarChromeState()
         const files = await window.electronAPI.listAllFiles(folder)
         updateFileIndex(folder, files)
       }
@@ -210,13 +226,15 @@ async function menuHandler(action: string, ...args: unknown[]) {
       openSearchPanel(view)
       break
     case 'toggle-sidebar':
-      toggleSidebar()
+      handleToggleSidebar()
       break
-    case 'toggle-outline': {
-      const panel = document.getElementById('outline-panel')
-      if (panel) panel.classList.toggle('visible')
+    case 'toggle-sidebar-view':
+      await toggleSidebarView()
+      syncTabBarChromeState()
       break
-    }
+    case 'toggle-outline':
+      handleToggleOutline()
+      break
     case 'toggle-source':
       toggleSourceMode()
       break

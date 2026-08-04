@@ -1,9 +1,11 @@
 import type { DirEntry } from '../../shared/types'
+import { ICON_LIST, ICON_TREE } from './icons'
 
 type FileOpenCallback = (filePath: string) => void
-type FileCreateCallback = (dirPath: string) => void
+type FileCreateCallback = (dirPath: string, name?: string) => void | Promise<void>
 type FileRenameCallback = (oldPath: string, newPath: string) => void
 type FileDeleteCallback = (filePath: string) => void
+type SidebarView = 'tree' | 'list'
 
 let onFileOpen: FileOpenCallback = () => {}
 let onFileCreate: FileCreateCallback = () => {}
@@ -13,6 +15,8 @@ let onFileDelete: FileDeleteCallback = () => {}
 let workspaceRoot: string | null = null
 let sidebarEl: HTMLElement | null = null
 let currentOpenFile: string | null = null
+let sidebarView: SidebarView = 'tree'
+let newFileInputActive = false
 
 const expandedDirs = new Set<string>()
 
@@ -24,10 +28,24 @@ const FILE_ICONS: Record<string, string> = {
   pdf: '📕', yml: '⚙️', yaml: '⚙️',
 }
 
-function getFileIcon(name: string, isDir: boolean): string {
+function getFileIcon(name: string, isDir = false): string {
   if (isDir) return '📁'
   const ext = name.split('.').pop()?.toLowerCase() || ''
   return FILE_ICONS[ext] || '📄'
+}
+
+function relativePath(filePath: string): string {
+  if (workspaceRoot && filePath.startsWith(workspaceRoot)) {
+    return filePath.slice(workspaceRoot.length + 1)
+  }
+  return filePath
+}
+
+function ensureSidebarVisible(): void {
+  const el = document.getElementById('sidebar')
+  if (el && !el.classList.contains('visible')) {
+    el.classList.add('visible')
+  }
 }
 
 export function setSidebarCallbacks(callbacks: {
@@ -47,10 +65,94 @@ export function setCurrentFile(filePath: string | null) {
   highlightActiveFile()
 }
 
+export function getSidebarView(): SidebarView {
+  return sidebarView
+}
+
+export async function setSidebarView(view: SidebarView, persist = true): Promise<void> {
+  sidebarView = view
+  ensureSidebarVisible()
+  updateViewToggleUI()
+  if (workspaceRoot) {
+    await renderSidebarContent(workspaceRoot)
+  }
+  if (persist) {
+    const config = await window.electronAPI.getConfig()
+    const general = (config.general || {}) as Record<string, unknown>
+    await window.electronAPI.setConfig({
+      general: { ...general, sidebarView: view },
+    })
+  }
+}
+
+export async function toggleSidebarView(): Promise<void> {
+  await setSidebarView(sidebarView === 'tree' ? 'list' : 'tree')
+}
+
+function updateViewToggleUI() {
+  if (!sidebarEl) return
+  sidebarEl.querySelector('#sidebar-view-tree')?.classList.toggle('active', sidebarView === 'tree')
+  sidebarEl.querySelector('#sidebar-view-list')?.classList.toggle('active', sidebarView === 'list')
+}
+
 function highlightActiveFile() {
   if (!sidebarEl) return
-  sidebarEl.querySelectorAll('.markz-tree-item').forEach((el) => {
+  sidebarEl.querySelectorAll('.markz-sidebar-file').forEach((el) => {
     el.classList.toggle('active', (el as HTMLElement).dataset.path === currentOpenFile)
+  })
+}
+
+function getFileListContainer(): HTMLElement | null {
+  const content = document.getElementById('sidebar-content')
+  if (!content) return null
+  return content.querySelector('.markz-file-tree, .markz-file-list') as HTMLElement | null
+}
+
+function showInlineNewFileInput() {
+  if (!workspaceRoot || newFileInputActive) return
+
+  const container = getFileListContainer()
+  if (!container) return
+
+  newFileInputActive = true
+  const row = document.createElement('div')
+  row.className = 'markz-new-file-row'
+  row.id = 'sidebar-new-file-row'
+
+  const input = document.createElement('input')
+  input.className = 'markz-new-file-input'
+  input.type = 'text'
+  input.value = 'untitled.md'
+  row.appendChild(input)
+
+  container.insertBefore(row, container.firstChild)
+  input.focus()
+  input.setSelectionRange(0, input.value.lastIndexOf('.') > 0 ? input.value.lastIndexOf('.') : input.value.length)
+
+  const cancel = () => {
+    newFileInputActive = false
+    row.remove()
+  }
+
+  const commit = async () => {
+    const name = input.value.trim()
+    cancel()
+    if (name && workspaceRoot) {
+      await onFileCreate(workspaceRoot, name)
+    }
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); void commit() }
+    if (e.key === 'Escape') { e.preventDefault(); cancel() }
+  })
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      if (!document.getElementById('sidebar-new-file-row')) return
+      const name = input.value.trim()
+      if (name) void commit()
+      else cancel()
+    }, 100)
   })
 }
 
@@ -62,8 +164,9 @@ export function createSidebar(parent: HTMLElement): HTMLElement {
     <div class="markz-sidebar-header">
       <span>Files</span>
       <div class="markz-sidebar-actions">
-        <button class="markz-sidebar-btn" id="sidebar-new-file" title="New File">+</button>
-        <button class="markz-sidebar-btn" id="sidebar-refresh" title="Refresh">↻</button>
+        <button class="markz-sidebar-btn markz-sidebar-view-btn" id="sidebar-view-tree" title="Tree view" type="button">${ICON_TREE}</button>
+        <button class="markz-sidebar-btn markz-sidebar-view-btn" id="sidebar-view-list" title="File list" type="button">${ICON_LIST}</button>
+        <button class="markz-sidebar-btn" id="sidebar-new-file" title="New File" type="button">+</button>
       </div>
     </div>
     <div class="markz-sidebar-content" id="sidebar-content">
@@ -72,6 +175,7 @@ export function createSidebar(parent: HTMLElement): HTMLElement {
   `
   parent.insertBefore(sidebar, parent.firstChild)
   sidebarEl = sidebar
+  updateViewToggleUI()
 
   sidebar.querySelector('#sidebar-open-folder')?.addEventListener('click', async () => {
     const folder = await window.electronAPI.openFolder()
@@ -79,11 +183,15 @@ export function createSidebar(parent: HTMLElement): HTMLElement {
   })
 
   sidebar.querySelector('#sidebar-new-file')?.addEventListener('click', () => {
-    if (workspaceRoot) onFileCreate(workspaceRoot)
+    showInlineNewFileInput()
   })
 
-  sidebar.querySelector('#sidebar-refresh')?.addEventListener('click', () => {
-    if (workspaceRoot) loadFolder(workspaceRoot)
+  sidebar.querySelector('#sidebar-view-tree')?.addEventListener('click', () => {
+    void setSidebarView('tree')
+  })
+
+  sidebar.querySelector('#sidebar-view-list')?.addEventListener('click', () => {
+    void setSidebarView('list')
   })
 
   return sidebar
@@ -104,8 +212,14 @@ export async function loadFolder(dirPath: string): Promise<void> {
   content.innerHTML = '<div class="markz-sidebar-loading">Loading…</div>'
 
   await window.electronAPI.watchFolder(dirPath)
+  await renderSidebarContent(dirPath)
+}
 
-  const entries = await window.electronAPI.listDirectory(dirPath)
+async function renderSidebarContent(dirPath: string): Promise<void> {
+  const content = document.getElementById('sidebar-content')
+  if (!content) return
+
+  newFileInputActive = false
   content.innerHTML = ''
 
   const folderLabel = document.createElement('div')
@@ -114,18 +228,69 @@ export async function loadFolder(dirPath: string): Promise<void> {
   folderLabel.title = dirPath
   content.appendChild(folderLabel)
 
-  const tree = document.createElement('div')
-  tree.className = 'markz-file-tree'
-  content.appendChild(tree)
+  if (sidebarView === 'list') {
+    const files = await window.electronAPI.listAllFiles(dirPath)
+    renderFileList(content, files)
+  } else {
+    const entries = await window.electronAPI.listDirectory(dirPath)
+    const tree = document.createElement('div')
+    tree.className = 'markz-file-tree'
+    content.appendChild(tree)
+    renderEntries(tree, entries, 0)
+  }
 
-  renderEntries(tree, entries, 0)
   highlightActiveFile()
+}
+
+function renderFileList(container: HTMLElement, files: string[]) {
+  const list = document.createElement('div')
+  list.className = 'markz-file-list'
+
+  const sorted = [...files].sort((a, b) =>
+    relativePath(a).localeCompare(relativePath(b), undefined, { numeric: true, sensitivity: 'base' }),
+  )
+
+  for (const filePath of sorted) {
+    const rel = relativePath(filePath)
+    const name = rel.split('/').pop() || rel
+    const dir = rel.includes('/') ? rel.substring(0, rel.lastIndexOf('/')) : ''
+    const icon = getFileIcon(name)
+
+    const item = document.createElement('div')
+    item.className = 'markz-list-item markz-sidebar-file'
+    item.dataset.path = filePath
+    item.innerHTML =
+      `<span class="markz-list-row">` +
+      `<span class="markz-tree-icon">${icon}</span>` +
+      `<span class="markz-list-name">${name}</span>` +
+      `</span>` +
+      (dir ? `<span class="markz-list-dir">${dir}</span>` : '')
+
+    item.addEventListener('click', (e) => {
+      e.stopPropagation()
+      onFileOpen(filePath)
+    })
+
+    item.addEventListener('contextmenu', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      showContextMenu(e, { name, path: filePath, isDir: false })
+    })
+
+    list.appendChild(item)
+  }
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<div class="markz-sidebar-empty">No files in this folder</div>'
+  }
+
+  container.appendChild(list)
 }
 
 function renderEntries(container: HTMLElement, entries: DirEntry[], depth: number) {
   for (const entry of entries) {
     const item = document.createElement('div')
-    item.className = 'markz-tree-item'
+    item.className = 'markz-tree-item markz-sidebar-file'
     item.dataset.path = entry.path
     item.style.paddingLeft = `${depth * 16 + 8}px`
 
@@ -221,7 +386,9 @@ function startRename(entry: DirEntry) {
   const item = sidebarEl?.querySelector(`[data-path="${CSS.escape(entry.path)}"]`) as HTMLElement
   if (!item) return
 
-  const nameSpan = item.querySelector('.markz-tree-name') as HTMLElement
+  const nameSpan = (item.querySelector('.markz-tree-name') || item.querySelector('.markz-list-name')) as HTMLElement
+  if (!nameSpan) return
+
   const oldName = entry.name
   const input = document.createElement('input')
   input.className = 'markz-rename-input'

@@ -154,6 +154,10 @@ export function buildMenu(win: BrowserWindow): void {
           click: () => win.webContents.send('menu:toggle-sidebar'),
         },
         {
+          label: 'Toggle Sidebar File List',
+          click: () => win.webContents.send('menu:toggle-sidebar-view'),
+        },
+        {
           label: 'Toggle Outline',
           accelerator: 'CmdOrCtrl+Shift+O',
           click: () => win.webContents.send('menu:toggle-outline'),
