@@ -69,9 +69,9 @@ export function getSidebarView(): SidebarView {
   return sidebarView
 }
 
-export async function setSidebarView(view: SidebarView, persist = true): Promise<void> {
+export async function setSidebarView(view: SidebarView, persist = true, reveal = false): Promise<void> {
   sidebarView = view
-  ensureSidebarVisible()
+  if (reveal) ensureSidebarVisible()
   updateViewToggleUI()
   if (workspaceRoot) {
     await renderSidebarContent(workspaceRoot)
@@ -86,7 +86,7 @@ export async function setSidebarView(view: SidebarView, persist = true): Promise
 }
 
 export async function toggleSidebarView(): Promise<void> {
-  await setSidebarView(sidebarView === 'tree' ? 'list' : 'tree')
+  await setSidebarView(sidebarView === 'tree' ? 'list' : 'tree', true, true)
 }
 
 function updateViewToggleUI() {
@@ -187,11 +187,11 @@ export function createSidebar(parent: HTMLElement): HTMLElement {
   })
 
   sidebar.querySelector('#sidebar-view-tree')?.addEventListener('click', () => {
-    void setSidebarView('tree')
+    void setSidebarView('tree', true, true)
   })
 
   sidebar.querySelector('#sidebar-view-list')?.addEventListener('click', () => {
-    void setSidebarView('list')
+    void setSidebarView('list', true, true)
   })
 
   return sidebar

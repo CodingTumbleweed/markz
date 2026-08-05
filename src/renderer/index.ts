@@ -182,11 +182,6 @@ async function menuHandler(action: string, ...args: unknown[]) {
       const folder = await window.electronAPI.openFolder()
       if (folder) {
         await loadFolder(folder)
-        const sidebar = document.getElementById('sidebar')
-        if (sidebar && !sidebar.classList.contains('visible')) {
-          sidebar.classList.add('visible')
-        }
-        syncTabBarChromeState()
         const files = await window.electronAPI.listAllFiles(folder)
         updateFileIndex(folder, files)
       }
