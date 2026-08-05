@@ -1,6 +1,6 @@
 {
   "name": "markz",
-  "version": "0.2.0-beta.3",
+  "version": "0.2.0-beta.4",
   "description": "A seamless WYSIWYG Markdown editor for desktop",
   "main": "dist/main/index.js",
   "author": "Usman Akram <usman.akram.se@gmail.com>",

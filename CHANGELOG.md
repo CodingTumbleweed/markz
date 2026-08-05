@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.2.0-beta.4] -- 2026-08-05
+
 ### Added
 
 - File list sidebar view (F-2 / FR-4.2): flat sorted list of all workspace files with tree/list toggle
@@ -18,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Sidebar tree/list view buttons use distinct SVG icons; switching view mode auto-opens the sidebar
 - Removed redundant sidebar refresh button (folder watcher auto-updates the file list)
+- Sidebar closed by default on launch; opens only when toggled or when switching tree/list view
 
 ---
 
