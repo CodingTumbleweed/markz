@@ -1,4 +1,5 @@
 import { WidgetType, EditorView } from '@codemirror/view'
+import { md } from '../../parser'
 
 export class TableWidget extends WidgetType {
   constructor(
@@ -26,7 +27,7 @@ export class TableWidget extends WidgetType {
       const headerRow = document.createElement('tr')
       for (let i = 0; i < this.rows[0].length; i++) {
         const th = document.createElement('th')
-        th.textContent = this.rows[0][i]?.trim() || ''
+        th.innerHTML = md.renderInline(this.rows[0][i]?.trim() || '')
         if (this.alignments[i]) {
           th.style.textAlign = this.alignments[i]!
         }
@@ -42,7 +43,7 @@ export class TableWidget extends WidgetType {
         const tr = document.createElement('tr')
         for (let c = 0; c < this.rows[r].length; c++) {
           const td = document.createElement('td')
-          td.textContent = this.rows[r][c]?.trim() || ''
+          td.innerHTML = md.renderInline(this.rows[r][c]?.trim() || '')
           if (this.alignments[c]) {
             td.style.textAlign = this.alignments[c]!
           }

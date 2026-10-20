@@ -541,6 +541,18 @@ html.dark .markz-tab-close:hover {
   background: rgba(0, 0, 0, 0.02);
 }
 
+.markz-table strong { font-weight: 700; }
+.markz-table em { font-style: italic; }
+.markz-table s { text-decoration: line-through; color: #999; }
+.markz-table a { color: var(--markz-accent); text-decoration: underline; cursor: pointer; }
+.markz-table code {
+  font-family: var(--markz-mono-font);
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+  padding: 0.15em 0.3em;
+  font-size: 0.9em;
+}
+
 /* highlight.js base theme */
 .hljs-keyword { color: #d73a49; }
 .hljs-string { color: #032f62; }
