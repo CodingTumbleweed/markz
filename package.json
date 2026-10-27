@@ -21,7 +21,8 @@
     "package:win": "npm run build && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
     "generate:icons": "python3 scripts/generate-icons.py",
-    "test:nav": "node scripts/navigation-test.mjs"
+    "test:nav": "node scripts/navigation-test.mjs",
+    "test:wrap": "node scripts/wrap-selection-test.mjs"
   },
   "devDependencies": {
     "@types/katex": "^0.16.8",
