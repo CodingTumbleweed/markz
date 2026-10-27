@@ -8,15 +8,38 @@ import {
   selectVisualLineUp,
 } from './blockNavigation'
 
+/**
+ * Toggle a pair of wrapping markers around the selection (e.g. '**' for bold,
+ * '*' for italic, '~~' for strikethrough, '`' for inline code).
+ *
+ * Toggling semantics (fixes issue #8):
+ *   1. If the selection already includes the markers (e.g. selection is
+ *      "**bold**"), strip them from inside the selection.
+ *   2. If the markers sit immediately outside the selection (e.g. selection
+ *      is "bold" and the surrounding chars are "**" and "**"), strip the
+ *      outer markers so Cmd+B/Cmd+I correctly toggles OFF after wrapping.
+ *   3. If the selection is empty but the cursor sits inside a marker pair on
+ *      the same line (e.g. "**bo|ld**"), find the nearest surrounding pair
+ *      and strip it.
+ *   4. Otherwise, wrap the selection with the markers (original behavior).
+ *
+ * For italic ('*') the toggle-off checks must avoid matching the second
+ * asterisk of a bold '**' as if it were an italic opener/closer; see
+ * `isAsteriskPartOfBold`.
+ */
 export function wrapSelection(view: EditorView, before: string, after: string): boolean {
   const { state } = view
-  const changes = state.changeByRange((range) => {
-    const selected = state.doc.sliceString(range.from, range.to)
+  const doc = state.doc
+  const singleAsterisk = before === '*' && after === '*'
 
+  const changes = state.changeByRange((range) => {
+    const selected = doc.sliceString(range.from, range.to)
+
+    // --- Case 1: the markers live inside the selection ("**bold**" selected)
     if (
+      selected.length >= before.length + after.length &&
       selected.startsWith(before) &&
-      selected.endsWith(after) &&
-      selected.length >= before.length + after.length
+      selected.endsWith(after)
     ) {
       const unwrapped = selected.slice(before.length, selected.length - after.length)
       return {
@@ -25,6 +48,43 @@ export function wrapSelection(view: EditorView, before: string, after: string): 
       }
     }
 
+    // --- Case 2: the markers hug the selection from outside
+    const outerStart = range.from - before.length
+    const outerEnd = range.to + after.length
+    if (
+      outerStart >= 0 &&
+      outerEnd <= doc.length &&
+      doc.sliceString(outerStart, range.from) === before &&
+      doc.sliceString(range.to, outerEnd) === after &&
+      !(singleAsterisk && isAsteriskPartOfBold(doc, outerStart, range.to))
+    ) {
+      return {
+        changes: [
+          { from: outerStart, to: range.from, insert: '' },
+          { from: range.to, to: outerEnd, insert: '' },
+        ],
+        range: EditorSelection.range(outerStart, outerStart + selected.length),
+      }
+    }
+
+    // --- Case 3: empty selection sitting inside a marker pair on the same line
+    if (range.empty) {
+      const pair = findSurroundingPair(doc, range.from, before, after, singleAsterisk)
+      if (pair) {
+        const { leftStart, rightStart } = pair
+        return {
+          changes: [
+            { from: leftStart, to: leftStart + before.length, insert: '' },
+            { from: rightStart, to: rightStart + after.length, insert: '' },
+          ],
+          // Keep the cursor at the same logical character position, now that
+          // `before` chars to the left of it have been removed.
+          range: EditorSelection.cursor(range.from - before.length),
+        }
+      }
+    }
+
+    // --- Default: wrap the selection
     const wrapped = before + selected + after
     return {
       changes: { from: range.from, to: range.to, insert: wrapped },
@@ -37,6 +97,71 @@ export function wrapSelection(view: EditorView, before: string, after: string): 
 
   view.dispatch(changes)
   return true
+}
+
+/**
+ * Returns true when the single-asterisk markers at `leftStart` and `rightStart`
+ * are actually part of a longer `**` (bold) marker, which must not be stripped
+ * when toggling italic.
+ */
+function isAsteriskPartOfBold(
+  doc: EditorView['state']['doc'],
+  leftStart: number,
+  rightStart: number,
+): boolean {
+  const prev = leftStart > 0 ? doc.sliceString(leftStart - 1, leftStart) : ''
+  const next = rightStart + 1 <= doc.length ? doc.sliceString(rightStart + 1, rightStart + 2) : ''
+  return prev === '*' || next === '*'
+}
+
+/**
+ * Find the nearest matching marker pair that surrounds `pos` on the same line.
+ * Returns the absolute document offsets of the opening and closing markers,
+ * or null if no valid pair is found.
+ */
+function findSurroundingPair(
+  doc: EditorView['state']['doc'],
+  pos: number,
+  before: string,
+  after: string,
+  singleAsterisk: boolean,
+): { leftStart: number; rightStart: number } | null {
+  const line = doc.lineAt(pos)
+  const text = line.text
+  const rel = pos - line.from
+
+  const isValidAsteriskAt = (i: number): boolean => {
+    if (!singleAsterisk) return true
+    const prev = i > 0 ? text[i - 1] : ''
+    const next = text[i + 1] ?? ''
+    return prev !== '*' && next !== '*'
+  }
+
+  let leftRel = -1
+  for (let i = rel - before.length; i >= 0; i--) {
+    if (text.slice(i, i + before.length) === before && isValidAsteriskAt(i)) {
+      leftRel = i
+      break
+    }
+  }
+  if (leftRel < 0) return null
+
+  let rightRel = -1
+  for (let i = rel; i <= text.length - after.length; i++) {
+    if (text.slice(i, i + after.length) === after && isValidAsteriskAt(i)) {
+      rightRel = i
+      break
+    }
+  }
+  if (rightRel < 0) return null
+
+  // Reject if there's nothing between the two markers (e.g. empty "**|**")
+  if (leftRel + before.length > rightRel) return null
+
+  return {
+    leftStart: line.from + leftRel,
+    rightStart: line.from + rightRel,
+  }
 }
 
 export function setHeading(view: EditorView, level: number): boolean {
