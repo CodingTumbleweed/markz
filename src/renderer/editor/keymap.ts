@@ -311,24 +311,50 @@ function moveLine(view: EditorView, dir: -1 | 1): boolean {
   return true
 }
 
+/**
+ * Enter-key handler that continues the current list/blockquote construct.
+ *
+ * Fixes issue #9: every "insert the next bullet" branch below previously
+ * dispatched a `changes` without an explicit `selection`. CodeMirror then
+ * kept the cursor pinned to its old document offset, which — because the
+ * change was inserted at that offset — left the caret on the previous
+ * line while the new bullet appeared on the line below.
+ *
+ * Each branch now computes the end of the inserted text and sets
+ * `EditorSelection.cursor(head + insert.length)` so the caret lands at
+ * the end of the newly-created bullet prefix, ready for typing.
+ *
+ * The "empty item exits the list" branches also set `selection` to
+ * `line.from` so the behaviour is explicit instead of relying on
+ * CodeMirror's default cursor-after-delete handling.
+ */
 export function listContinuation(view: EditorView): boolean {
   const { state } = view
-  const line = state.doc.lineAt(state.selection.main.head)
+  const head = state.selection.main.head
+  const line = state.doc.lineAt(head)
   const text = line.text
+
+  const insertAtCursor = (insert: string) => {
+    view.dispatch({
+      changes: { from: head, insert },
+      selection: EditorSelection.cursor(head + insert.length),
+    })
+  }
+
+  const clearLine = () => {
+    view.dispatch({
+      changes: { from: line.from, to: line.to, insert: '' },
+      selection: EditorSelection.cursor(line.from),
+    })
+  }
 
   const bulletMatch = text.match(/^(\s*)([-*+])\s/)
   if (bulletMatch) {
     if (text.trim() === bulletMatch[2]) {
-      view.dispatch({
-        changes: { from: line.from, to: line.to, insert: '' },
-      })
+      clearLine()
       return true
     }
-    const indent = bulletMatch[1]
-    const marker = bulletMatch[2]
-    view.dispatch({
-      changes: { from: state.selection.main.head, insert: '\n' + indent + marker + ' ' },
-    })
+    insertAtCursor('\n' + bulletMatch[1] + bulletMatch[2] + ' ')
     return true
   }
 
@@ -336,53 +362,31 @@ export function listContinuation(view: EditorView): boolean {
   if (orderedMatch) {
     const num = parseInt(orderedMatch[2])
     if (text.trim() === orderedMatch[2] + orderedMatch[3].charAt(0)) {
-      view.dispatch({
-        changes: { from: line.from, to: line.to, insert: '' },
-      })
+      clearLine()
       return true
     }
-    const indent = orderedMatch[1]
-    const delim = orderedMatch[3]
-    view.dispatch({
-      changes: {
-        from: state.selection.main.head,
-        insert: '\n' + indent + (num + 1) + delim,
-      },
-    })
+    insertAtCursor('\n' + orderedMatch[1] + (num + 1) + orderedMatch[3])
     return true
   }
 
   const blockquoteMatch = text.match(/^(\s*>\s*)/)
   if (blockquoteMatch) {
     if (text.trim() === '>') {
-      view.dispatch({
-        changes: { from: line.from, to: line.to, insert: '' },
-      })
+      clearLine()
       return true
     }
-    view.dispatch({
-      changes: {
-        from: state.selection.main.head,
-        insert: '\n' + blockquoteMatch[1],
-      },
-    })
+    insertAtCursor('\n' + blockquoteMatch[1])
     return true
   }
 
   const taskMatch = text.match(/^(\s*[-*+]\s*\[[ xX]\]\s*)/)
   if (taskMatch) {
     if (text.trim().match(/^[-*+]\s*\[[ xX]\]$/)) {
-      view.dispatch({
-        changes: { from: line.from, to: line.to, insert: '' },
-      })
+      clearLine()
       return true
     }
-    view.dispatch({
-      changes: {
-        from: state.selection.main.head,
-        insert: '\n' + text.match(/^(\s*)/)?.[1] + '- [ ] ',
-      },
-    })
+    const indent = text.match(/^(\s*)/)?.[1] ?? ''
+    insertAtCursor('\n' + indent + '- [ ] ')
     return true
   }
 
