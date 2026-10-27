@@ -10,10 +10,46 @@ function ensureInit() {
     startOnLoad: false,
     theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
     securityLevel: 'strict',
-    fontFamily: 'inherit',
+    // IMPORTANT: do NOT use 'inherit' here. Mermaid measures label width in a
+    // temp container appended to document.body (which uses the Markz sans-serif
+    // stack), but the final SVG is mounted inside CodeMirror's `.cm-content`
+    // whose default theme sets `font-family: monospace`. With 'inherit' the
+    // rendered text ends up in monospace (wider than the sans-serif used for
+    // measurement) and overflows node boundaries — this was the real cause of
+    // issue #7's clipped labels. Setting an explicit sans-serif stack forces
+    // measurement and rendering to use the same font metrics.
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    flowchart: {
+      useMaxWidth: true,
+      padding: 15,
+      nodeSpacing: 50,
+      rankSpacing: 55,
+      curve: 'basis',
+      diagramPadding: 12,
+      subGraphTitleMargin: { top: 8, bottom: 8 },
+    },
+    sequence: {
+      useMaxWidth: true,
+      wrap: true,
+    },
+    class: { useMaxWidth: true },
+    state: { useMaxWidth: true },
+    gantt: { useMaxWidth: true },
+    er: { useMaxWidth: true },
+    journey: { useMaxWidth: true },
+    pie: { useMaxWidth: true },
   })
   mermaidInitialized = true
 }
+
+const MIN_SCALE = 0.25
+const MAX_SCALE = 4
+const SCALE_STEP = 1.2
+// Re-render through Mermaid when the container width changes by more than
+// this fraction. Smaller changes rely on CSS/viewBox scaling, which avoids
+// the cost (and flicker) of re-rendering on every resize tick.
+const RERENDER_WIDTH_THRESHOLD = 0.25
 
 export class MermaidWidget extends WidgetType {
   constructor(
@@ -32,28 +68,145 @@ export class MermaidWidget extends WidgetType {
     const wrapper = document.createElement('div')
     wrapper.className = 'markz-mermaid-block'
 
+    const viewport = document.createElement('div')
+    viewport.className = 'markz-mermaid-viewport'
+    wrapper.appendChild(viewport)
+
+    const controls = createZoomControls()
+    wrapper.appendChild(controls.element)
+
     ensureInit()
     const id = `markz-mermaid-${idCounter++}`
 
-    mermaid.render(id, this.source).then(({ svg }) => {
-      wrapper.innerHTML = svg
-      wrapper.querySelector('svg')?.setAttribute('style', 'max-width:100%;height:auto;')
-    }).catch((err) => {
-      wrapper.innerHTML = `<div class="markz-mermaid-error">Diagram error: ${err.message || err}</div>`
-    })
+    // Zoom / pan state. Persists across CodeMirror widget-reuse because eq()
+    // returns true when source is unchanged (so toDOM isn't re-invoked).
+    let scale = 1
+    let panX = 0
+    let panY = 0
 
+    const applyTransform = () => {
+      const svg = viewport.querySelector('svg') as SVGElement | null
+      if (!svg) return
+      svg.style.transformOrigin = '0 0'
+      svg.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`
+      const zoomed = scale > 1.001
+      wrapper.classList.toggle('is-zoomed', zoomed)
+      controls.updateLabel(scale)
+    }
+
+    const setScale = (next: number) => {
+      scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, next))
+      if (Math.abs(scale - 1) < 1e-3) {
+        // Snap pan back to origin when returning to 1x so content re-centers.
+        panX = 0
+        panY = 0
+      }
+      applyTransform()
+    }
+
+    const resetZoom = () => {
+      scale = 1
+      panX = 0
+      panY = 0
+      applyTransform()
+    }
+
+    controls.onZoomIn(() => setScale(scale * SCALE_STEP))
+    controls.onZoomOut(() => setScale(scale / SCALE_STEP))
+    controls.onReset(resetZoom)
+
+    const render = async () => {
+      try {
+        const { svg } = await mermaid.render(id, this.source)
+        viewport.innerHTML = svg
+        const el = viewport.querySelector('svg') as SVGElement | null
+        if (el) {
+          // Let the viewBox handle aspect ratio and let CSS stretch width to
+          // the container. This is what makes the diagram grow when the
+          // window is widened.
+          el.removeAttribute('width')
+          el.removeAttribute('height')
+          el.style.width = '100%'
+          el.style.height = 'auto'
+          el.style.maxWidth = '100%'
+          applyTransform()
+        }
+      } catch (err: any) {
+        viewport.innerHTML = `<div class="markz-mermaid-error">Diagram error: ${err?.message || err}</div>`
+      }
+    }
+
+    render()
+
+    // ---- Resize-driven re-render (debounced, threshold-gated) ----
+    let lastRenderWidth = 0
+    let resizeTimer: number | undefined
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0
+      if (w <= 0) return
+      if (!lastRenderWidth) {
+        lastRenderWidth = w
+        return
+      }
+      const delta = Math.abs(w - lastRenderWidth) / lastRenderWidth
+      if (delta < RERENDER_WIDTH_THRESHOLD) return
+      window.clearTimeout(resizeTimer)
+      resizeTimer = window.setTimeout(() => {
+        lastRenderWidth = w
+        render()
+      }, 150)
+    })
+    ro.observe(wrapper)
+
+    // ---- Click to position cursor in source (only when not zoomed) ----
     wrapper.addEventListener('mousedown', (e) => {
+      if ((e.target as HTMLElement).closest('.markz-mermaid-controls')) return
+      if (scale > 1.001) return // zoomed: let drag-to-pan handle it
       e.preventDefault()
       view.dispatch({ selection: { anchor: this.from } })
       view.focus()
     })
 
+    // ---- Ctrl/Cmd + wheel to zoom ----
+    wrapper.addEventListener('wheel', (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return
+      e.preventDefault()
+      const factor = e.deltaY < 0 ? SCALE_STEP : 1 / SCALE_STEP
+      setScale(scale * factor)
+    }, { passive: false })
+
+    // ---- Drag-to-pan when zoomed in ----
+    let dragStart: { x: number; y: number; panX: number; panY: number } | null = null
+    viewport.addEventListener('pointerdown', (e) => {
+      if (scale <= 1.001) return
+      if ((e.target as HTMLElement).closest('.markz-mermaid-controls')) return
+      dragStart = { x: e.clientX, y: e.clientY, panX, panY }
+      viewport.setPointerCapture(e.pointerId)
+      viewport.classList.add('is-panning')
+      e.preventDefault()
+    })
+    viewport.addEventListener('pointermove', (e) => {
+      if (!dragStart) return
+      panX = dragStart.panX + (e.clientX - dragStart.x)
+      panY = dragStart.panY + (e.clientY - dragStart.y)
+      applyTransform()
+    })
+    const endDrag = (e: PointerEvent) => {
+      if (!dragStart) return
+      dragStart = null
+      try { viewport.releasePointerCapture(e.pointerId) } catch { /* no-op */ }
+      viewport.classList.remove('is-panning')
+    }
+    viewport.addEventListener('pointerup', endDrag)
+    viewport.addEventListener('pointercancel', endDrag)
+
+    // ---- Context menu (existing export options) ----
     wrapper.addEventListener('contextmenu', (e) => {
       e.preventDefault()
       e.stopPropagation()
-      const svg = wrapper.querySelector('svg')
+      const svg = viewport.querySelector('svg')
       if (!svg) return
-      showDiagramContextMenu(e, svg)
+      showDiagramContextMenu(e, svg as SVGElement)
     })
 
     return wrapper
@@ -61,6 +214,51 @@ export class MermaidWidget extends WidgetType {
 
   ignoreEvent(event: Event): boolean {
     return !/^mouse|^click|^context/.test(event.type)
+  }
+}
+
+interface ZoomControls {
+  element: HTMLElement
+  onZoomIn: (cb: () => void) => void
+  onZoomOut: (cb: () => void) => void
+  onReset: (cb: () => void) => void
+  updateLabel: (scale: number) => void
+}
+
+function createZoomControls(): ZoomControls {
+  const el = document.createElement('div')
+  el.className = 'markz-mermaid-controls'
+
+  const makeBtn = (label: string, title: string) => {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'markz-mermaid-ctrl-btn'
+    b.textContent = label
+    b.title = title
+    // Prevent the wrapper's mousedown handler (which moves the editor cursor)
+    // from firing when a control is clicked.
+    b.addEventListener('mousedown', (e) => e.stopPropagation())
+    return b
+  }
+
+  const zoomOut = makeBtn('−', 'Zoom out')
+  const zoomIn = makeBtn('+', 'Zoom in')
+  const reset = makeBtn('⟲', 'Reset zoom')
+
+  const scaleLabel = document.createElement('span')
+  scaleLabel.className = 'markz-mermaid-scale'
+  scaleLabel.textContent = '100%'
+
+  el.append(zoomOut, scaleLabel, zoomIn, reset)
+
+  return {
+    element: el,
+    onZoomIn: (cb) => zoomIn.addEventListener('click', cb),
+    onZoomOut: (cb) => zoomOut.addEventListener('click', cb),
+    onReset: (cb) => reset.addEventListener('click', cb),
+    updateLabel: (s) => {
+      scaleLabel.textContent = `${Math.round(s * 100)}%`
+    },
   }
 }
 
