@@ -9,14 +9,17 @@ function ensureInit() {
   mermaid.initialize({
     startOnLoad: false,
     theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
-    // 'loose' is required to enable htmlLabels, which fixes label clipping
-    // by rendering node + subgraph labels as auto-sizing HTML foreignObjects.
-    // Markz renders only user-authored local markdown, so this is acceptable.
-    securityLevel: 'loose',
-    fontFamily: 'inherit',
-    // Mermaid 11 expects `htmlLabels` at the root; `flowchart.htmlLabels`
-    // is deprecated and does not always apply (see Mermaid config.type.d.ts).
-    htmlLabels: true,
+    securityLevel: 'strict',
+    // IMPORTANT: do NOT use 'inherit' here. Mermaid measures label width in a
+    // temp container appended to document.body (which uses the Markz sans-serif
+    // stack), but the final SVG is mounted inside CodeMirror's `.cm-content`
+    // whose default theme sets `font-family: monospace`. With 'inherit' the
+    // rendered text ends up in monospace (wider than the sans-serif used for
+    // measurement) and overflows node boundaries — this was the real cause of
+    // issue #7's clipped labels. Setting an explicit sans-serif stack forces
+    // measurement and rendering to use the same font metrics.
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     flowchart: {
       useMaxWidth: true,
       padding: 15,

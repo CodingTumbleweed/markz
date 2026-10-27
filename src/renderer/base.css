@@ -780,6 +780,17 @@ html.dark .markz-highlight {
   height: auto;
   transform-origin: 0 0;
   will-change: transform;
+  /* Pin SVG text to the Markz sans-serif stack. The widget lives inside
+     CodeMirror's `.cm-content`, which the CM default theme styles as
+     monospace; without this override any `font-family: inherit` on
+     generated SVG text would resolve to monospace at render time while
+     Mermaid measures width in sans-serif, causing label clipping. */
+  font-family: var(--markz-font-family);
+}
+
+.markz-mermaid-block svg text,
+.markz-mermaid-block svg foreignObject {
+  font-family: var(--markz-font-family);
 }
 
 .markz-mermaid-controls {
