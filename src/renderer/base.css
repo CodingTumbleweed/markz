@@ -751,7 +751,9 @@ html.dark .markz-highlight {
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.02);
   min-height: 60px;
-  overflow: hidden;
+  /* No overflow:hidden here — it would clip Mermaid labels that extend
+     slightly past the SVG's reported viewBox at the right edge. Pan
+     containment is handled on .markz-mermaid-viewport instead. */
 }
 
 .markz-mermaid-block:hover {

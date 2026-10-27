@@ -9,18 +9,22 @@ function ensureInit() {
   mermaid.initialize({
     startOnLoad: false,
     theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
-    // 'loose' is required to enable htmlLabels for flowchart (used below),
-    // which fixes label clipping by allowing text to wrap inside nodes.
+    // 'loose' is required to enable htmlLabels, which fixes label clipping
+    // by rendering node + subgraph labels as auto-sizing HTML foreignObjects.
     // Markz renders only user-authored local markdown, so this is acceptable.
     securityLevel: 'loose',
     fontFamily: 'inherit',
+    // Mermaid 11 expects `htmlLabels` at the root; `flowchart.htmlLabels`
+    // is deprecated and does not always apply (see Mermaid config.type.d.ts).
+    htmlLabels: true,
     flowchart: {
-      htmlLabels: true,
       useMaxWidth: true,
       padding: 15,
       nodeSpacing: 50,
       rankSpacing: 55,
       curve: 'basis',
+      diagramPadding: 12,
+      subGraphTitleMargin: { top: 8, bottom: 8 },
     },
     sequence: {
       useMaxWidth: true,
