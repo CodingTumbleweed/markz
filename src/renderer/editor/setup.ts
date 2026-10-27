@@ -86,9 +86,9 @@ console.log(greet('Markz'))
 
 | Feature | Status |
 |---------|--------|
-| Bold | Done |
-| Italic | Done |
-| Code blocks | Done |
+| **Bold** | Done |
+| *Italic* | Done |
+| \`Code blocks\` | Done |
 
 ## Math
 
