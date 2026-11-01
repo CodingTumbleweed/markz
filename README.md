@@ -5,6 +5,7 @@ Markz is a desktop Markdown editor. You type normal Markdown syntax; the documen
 See [Release Notes](docs/RELEASE_NOTES.md) and [Changelog](CHANGELOG.md).
 
 [![Latest release](https://img.shields.io/github/v/release/CodingTumbleweed/markz?include_prereleases&label=download)](https://github.com/CodingTumbleweed/markz/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/CodingTumbleweed/markz)](LICENSE)
 
 ## Download
 
@@ -12,7 +13,7 @@ See [Release Notes](docs/RELEASE_NOTES.md) and [Changelog](CHANGELOG.md).
 >
 > Markz beta builds are **unsigned**. macOS Gatekeeper and Windows SmartScreen may warn or block the app the first time you open it.
 >
-> **[Installation guide →](docs/INSTALL.md)** — platform steps and checksum verification
+> **[Installation guide →](docs/INSTALL.md)** platform steps and checksum verification
 
 Pick a build from **[GitHub Releases](https://github.com/CodingTumbleweed/markz/releases/latest)**:
 
@@ -61,8 +62,7 @@ npm run build            # production bundle
 npm run package:mac      # local installer → release/ (also :win, :linux)
 ```
 
-More detail: [docs/DESIGN.md](docs/DESIGN.md) and the rest of [`docs/`](docs/).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Released under the [MIT License](LICENSE).
