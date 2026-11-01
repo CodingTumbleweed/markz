@@ -10,6 +10,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.2.0-beta.5] -- 2026-11-01
+
+### Fixed
+
+- Inline markdown (bold, italic, code, links, strikethrough) renders inside table cells ([#6](https://github.com/CodingTumbleweed/markz/issues/6))
+- Mermaid diagrams: labels no longer clip, per-diagram zoom controls, diagrams resize with the window ([#7](https://github.com/CodingTumbleweed/markz/issues/7))
+- `Cmd+B` / `Cmd+I` on already-bold / already-italic text toggles the markers off instead of adding more asterisks ([#8](https://github.com/CodingTumbleweed/markz/issues/8))
+- Pressing `Enter` inside a list item moves the caret into the new list item on the line below ([#9](https://github.com/CodingTumbleweed/markz/issues/9))
+- `ArrowUp` / `ArrowDown` preserve the horizontal column (goal column) across lines, matching standard editor behaviour
+- Last line of long documents is no longer clipped by the status bar
+
+---
+
 ## [0.2.0-beta.4] -- 2026-08-05
 
 ### Added
