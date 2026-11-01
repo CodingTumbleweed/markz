@@ -249,8 +249,12 @@ html.dark .markz-tab-close:hover {
 }
 
 .cm-editor {
+  /* `flex: 1` fills remaining space in the #editor-root flex column.
+   * Do NOT set `height: 100%`: it resolves to the parent's full height,
+   * which overrides the flex allocation and pushes the editor's bottom
+   * (and the status bar) below the viewport, clipping the last line. */
   flex: 1;
-  height: 100%;
+  min-height: 0;
 }
 
 .cm-editor .cm-scroller {

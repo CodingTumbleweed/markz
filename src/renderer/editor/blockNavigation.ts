@@ -72,15 +72,29 @@ function moveByStop(view: EditorView, direction: -1 | 1, extend: boolean): boole
   const nextIdx = idx + direction
   if (nextIdx < 0 || nextIdx >= stops.length) return false
 
-  const pos = stops[nextIdx]
-  if (pos === head && !extend) return false
-  const newSelection = extend
-    ? EditorSelection.range(selection.anchor, pos)
-    : EditorSelection.cursor(pos)
+  // Preserve horizontal position across vertical moves (standard "goal column"
+  // behaviour). CM6 stores a goalColumn on the selection; we fall back to the
+  // caret's current column when it isn't set. The goal is clamped to the
+  // target line's length so shorter lines land at end-of-line, while longer
+  // lines snap back to the goal on subsequent moves.
+  const currentLine = state.doc.lineAt(head)
+  const goalColumn = selection.goalColumn ?? (head - currentLine.from)
 
+  const targetLine = state.doc.lineAt(stops[nextIdx])
+  const targetPos = Math.min(targetLine.from + goalColumn, targetLine.to)
+
+  if (targetPos === head && !extend) return false
+
+  const range = extend
+    ? EditorSelection.range(selection.anchor, targetPos, goalColumn)
+    : EditorSelection.cursor(targetPos, undefined, undefined, goalColumn)
+
+  // Wrap in a full EditorSelection; passing a bare SelectionRange to
+  // `view.dispatch` goes through `EditorSelection.single(anchor, head)` in the
+  // transaction resolver, which strips the goal-column flag.
   view.dispatch({
-    selection: newSelection,
-    effects: EditorView.scrollIntoView(pos, { y: 'nearest' }),
+    selection: EditorSelection.create([range]),
+    effects: EditorView.scrollIntoView(targetPos, { y: 'nearest' }),
   })
   return true
 }

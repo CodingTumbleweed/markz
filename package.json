@@ -22,7 +22,10 @@
     "package:linux": "npm run build && electron-builder --linux",
     "generate:icons": "python3 scripts/generate-icons.py",
     "test:nav": "node scripts/navigation-test.mjs",
-    "test:wrap": "node scripts/wrap-selection-test.mjs"
+    "test:wrap": "node scripts/wrap-selection-test.mjs",
+    "test:list": "node scripts/list-continuation-test.mjs",
+    "test:nav-column": "node scripts/block-navigation-test.mjs",
+    "test:layout": "node scripts/verify-cutoff.mjs"
   },
   "devDependencies": {
     "@types/katex": "^0.16.8",
